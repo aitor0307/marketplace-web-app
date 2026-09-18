@@ -1,4 +1,11 @@
-
 .idea/
 other/
 __pycache__/
+*.pyc
+
+.env
+*.db
+logs/
+venv/
+.venv/
+.pytest_cache/

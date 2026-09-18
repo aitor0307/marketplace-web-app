@@ -1,1 +1,1 @@
-web: gunicorn marketplace:app
+web: gunicorn -c docker/gunicorn.conf.py wsgi:app

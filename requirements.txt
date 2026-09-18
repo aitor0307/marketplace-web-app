@@ -1,24 +1,16 @@
-certifi==2019.9.11
-chardet==3.0.4
-Click==7.0
-Flask==1.1.1
-Flask-WTF==0.14.2
-gunicorn
-idna==2.8
-itsdangerous==1.1.0
-Jinja2==2.11.3
-MarkupSafe==1.1.1
-requests==2.22.0
-urllib3==1.25.8
-Werkzeug==0.16.0
-WTForms==2.2.1
-flask_login
-flask_uploads
-flask_mail
-flask_moment
-flask_bootstrap
-flask_migrate
-flask_sqlalchemy
-# hashlib
-# app
-# config
+Flask==3.0.3
+Werkzeug==3.0.4
+Flask-WTF==1.2.1
+Flask-Login==0.6.3
+Flask-Mail==0.9.1
+Flask-Moment==1.0.5
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-JWT-Extended==4.6.0
+Bootstrap-Flask==2.4.0
+alembic==1.13.2
+psycopg2-binary==2.9.9
+redis==5.0.8
+gunicorn==22.0.0
+python-dotenv==1.0.1
+email-validator==2.2.0

@@ -17,15 +17,20 @@ config = context.config
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Alembic runs inside the app context pushed by `flask db ...`, which in
+# turn came from the same create_app()/get_config() factory logic the app
+# itself uses (FLASK_APP=wsgi.py -> create_app() -> APP_ENV/FLASK_ENV picks
+# the config class). So the DB URL and target metadata below always match
+# whatever environment the `flask db` command was invoked in.
 from flask import current_app
+
+from app import models  # noqa: F401  (registers every model on db.metadata)
+from app.extensions import db
+
 config.set_main_option(
     'sqlalchemy.url', current_app.config.get(
         'SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
-target_metadata = current_app.extensions['migrate'].db.metadata
+target_metadata = db.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

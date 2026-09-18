@@ -9,24 +9,24 @@
         <div class="container">
             <ul class="nav navbar-left">
                 <li class="nav-item">
-                    <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <a class="navbar-brand" href="{{ url_for('views_listings.index') }}">
                         <img src="../static/assets/logo2.png" width="30" height="30" class="d-inline-block align-top" alt="">
                         Marketplace
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}">Listings</a>
+                    <a class="nav-link" href="{{ url_for('views_listings.index') }}">Listings</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('new_listing') }}">Sell</a>
+                    <a class="nav-link" href="{{ url_for('views_listings.new_listing') }}">Sell</a>
                 </li>
             </ul>
             <ul class="nav navbar-right">
                 {% if current_user.is_anonymous %}
-                <li class="nav-item"><a href="{{ url_for('login') }}">Login</a></li>
+                <li class="nav-item"><a href="{{ url_for('views_auth.login') }}">Login</a></li>
                 {% else %}
-                <li class="nav-item"><a class="nav-link"  href="{{ url_for('user', id=current_user.id) }}">Profile</a></li>
-                <li class="nav-item"><a class="nav-link"  href="{{ url_for('logout') }}">Logout</a></li>
+                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_users.view_user', user_id=current_user.id) }}">Profile</a></li>
+                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_auth.logout') }}">Logout</a></li>
                 {% endif %}
             </ul>
         </div>

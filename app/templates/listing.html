@@ -7,7 +7,7 @@
     <div style="display: flex; align-items: flex-start;">
         <div class="col-8 pl-0">
             {% if listing.author == current_user %}
-                <p><a href="{{ url_for('delete_listing', id=listing.id) }}">Delete listing</a></p>
+                <p><a href="{{ url_for('views_listings.delete_listing_view', listing_id=listing.id) }}">Delete listing</a></p>
             {% endif %}
             <h5 class="font-weight-bold">{{ listing.title }}</h5>
             <p class="listing-tag">{{ listing.condition }}</p>
@@ -25,7 +25,7 @@
                                 <img width="60px" height="60px" class="profile-image mr-1" src="{{ user.avatar(128) }}"/>
                             </td>
                             <td>
-                                <a href="{{ url_for('user', id=user.id) }}">
+                                <a href="{{ url_for('views_users.view_user', user_id=user.id) }}">
                                     <h4>{{ user.name }}</h4>
                                 </a>
                                 <p class="mb-0">📍 {{ user.city }}, {{ user.state }}</p>
@@ -36,7 +36,7 @@
                                     <script>findDistance();</script>
                                 {% endif %}
                                 {% if current_user != user %}
-                                    <p class="m-0"><a href="{{ url_for('message', id=user.id) }}">Send Message</a></p>
+                                    <p class="m-0"><a href="{{ url_for('views_messages.message', user_id=user.id) }}">Send Message</a></p>
                                 {% endif %}
                             </td>
                         </tr>
@@ -44,7 +44,7 @@
                 </table>
             </div>
             {% if current_user.is_authenticated and listing.user_id != current_user.id %}
-                <p class="pt-4"><a href="{{ url_for('favorite', id=listing.id) }}">Add to my favorites</a></p>
+                <p class="pt-4"><a href="{{ url_for('views_favorites.favorite', listing_id=listing.id) }}">Add to my favorites</a></p>
             {% endif %}
         </div>
     </div>
