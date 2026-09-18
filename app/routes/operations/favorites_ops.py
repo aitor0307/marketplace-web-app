@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import get_jwt_identity
 
-from app.decorators.auth import roles_required
+from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import Favorite, User
 
@@ -17,7 +17,7 @@ def add_favorite(user, listing_id):
 
 @favorites_ops_bp.route("/<int:listing_id>", methods=["POST"])
 @api_doc("Add a listing to the current user's favorites", tags=["favorites"])
-@roles_required()
+@jwt_verify()
 def add_favorite_operation(listing_id):
     user = User.get_by_id(get_jwt_identity())
     favorite, created = add_favorite(user, listing_id)

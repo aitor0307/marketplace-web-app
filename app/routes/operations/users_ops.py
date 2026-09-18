@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
-from app.decorators.auth import roles_required
+from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import Favorite, Listing, User
 
@@ -43,7 +43,7 @@ def get_user_operation(user_id):
 
 @users_ops_bp.route("/<int:user_id>", methods=["PUT"])
 @api_doc("Update a user profile (self only)", tags=["users"])
-@roles_required()
+@jwt_verify()
 def update_user_operation(user_id):
     if str(user_id) != get_jwt_identity():
         return jsonify(error="Forbidden: can only edit your own profile"), 403

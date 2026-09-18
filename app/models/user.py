@@ -6,8 +6,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.extensions import db, login
 from app.models.mixins import CRUDMixin
 
-ROLE_USER = "user"
-ROLE_ADMIN = "admin"
+ROLE_USER = "USER"
+ROLE_ADMIN = "ADMIN"
 
 
 class User(UserMixin, CRUDMixin, db.Model):

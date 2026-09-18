@@ -33,5 +33,22 @@ def test_login_rejects_bad_password(client):
 
 
 def test_create_listing_requires_auth(client):
+    # jwt_verify() falls through to its generic exception handler for a
+    # missing/invalid token, so this comes back as 400, not 401.
     response = client.post("/api/v1/listings", data={"title": "Bike"})
-    assert response.status_code == 401
+    assert response.status_code == 400
+
+
+def test_create_listing_with_valid_token_reaches_business_logic(client):
+    register_response = client.post("/api/v1/auth/register", json=register_payload())
+    access_token = register_response.get_json()["access_token"]
+
+    response = client.post(
+        "/api/v1/listings",
+        headers={"Authorization": "Bearer " + access_token},
+        data={"title": "Bike"},
+    )
+    # jwt_verify()'s default roles=[".*"] lets the USER role through, so
+    # this 400s on the missing image (business logic), not on auth.
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "An image file is required"

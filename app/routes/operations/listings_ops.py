@@ -4,7 +4,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 from werkzeug.utils import secure_filename
 
-from app.decorators.auth import roles_required
+from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import Image, Listing, User
 
@@ -88,7 +88,7 @@ def get_listing_operation(listing_id):
 
 @listings_ops_bp.route("", methods=["POST"])
 @api_doc("Create a listing with an image upload", tags=["listings"])
-@roles_required()
+@jwt_verify()
 def create_listing_operation():
     user = User.get_by_id(get_jwt_identity())
     form = request.form
@@ -108,7 +108,7 @@ def create_listing_operation():
 
 @listings_ops_bp.route("/<int:listing_id>", methods=["DELETE"])
 @api_doc("Delete a listing you authored", tags=["listings"])
-@roles_required()
+@jwt_verify()
 def delete_listing_operation(listing_id):
     user = User.get_by_id(get_jwt_identity())
     listing, error = delete_listing(user, listing_id)

@@ -28,7 +28,7 @@ def authenticate_user(email, password):
 
 
 def issue_tokens(user):
-    claims = {"role": user.role}
+    claims = {"role": user.role, "user_id": user.id}
     return {
         "access_token": create_access_token(identity=str(user.id), additional_claims=claims),
         "refresh_token": create_refresh_token(identity=str(user.id), additional_claims=claims),

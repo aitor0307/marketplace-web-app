@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, jsonify, request, url_for
 from flask_jwt_extended import get_jwt_identity
 
-from app.decorators.auth import roles_required
+from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.email import send_email
 from app.models import User
@@ -27,7 +27,7 @@ def send_message(sender, recipient, subject, body):
 
 @messages_ops_bp.route("/<int:user_id>/messages", methods=["POST"])
 @api_doc("Send another user a message", tags=["messages"])
-@roles_required()
+@jwt_verify()
 def send_message_operation(user_id):
     sender = User.get_by_id(get_jwt_identity())
     recipient = User.get_by_id(user_id)
