@@ -1,9 +1,8 @@
-import os
-
 from .base import Config
 from .development import DevelopmentConfig
-from .testing import TestingConfig
 from .production import ProductionConfig
+from .settings import get_settings
+from .testing import TestingConfig
 
 config_by_name = {
     "development": DevelopmentConfig,
@@ -14,8 +13,6 @@ config_by_name = {
 
 
 def get_config(config_name=None):
-    """Resolve a config class by name, falling back to APP_ENV/FLASK_ENV."""
-    config_name = config_name or os.environ.get("APP_ENV") or os.environ.get(
-        "FLASK_ENV", "default"
-    )
+    """Resolve a config class by name, falling back to Settings.app_env."""
+    config_name = config_name or get_settings().app_env
     return config_by_name.get(config_name, config_by_name["default"])

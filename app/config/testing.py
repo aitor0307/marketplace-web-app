@@ -1,6 +1,6 @@
 import os
 
-from .base import Config, basedir
+from .base import Config, basedir, settings
 
 
 class TestingConfig(Config):
@@ -10,14 +10,14 @@ class TestingConfig(Config):
 
     # Tests default to a local sqlite file unless a real Postgres test
     # database is provided, so the suite can run without infra.
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "TEST_DATABASE_URL", "sqlite:///" + os.path.join(basedir, "test.db")
+    SQLALCHEMY_DATABASE_URI = settings.test_database_url or "sqlite:///" + os.path.join(
+        basedir, "test.db"
     )
 
     WTF_CSRF_ENABLED = False
 
     # Never touch a real Redis instance from tests.
-    REDIS_HOST = os.environ.get("TEST_REDIS_HOST", "localhost")
-    REDIS_DB = int(os.environ.get("TEST_REDIS_DB", 1))
+    REDIS_HOST = settings.test_redis_host
+    REDIS_DB = settings.test_redis_db
 
     JWT_ACCESS_TOKEN_EXPIRES = 300
