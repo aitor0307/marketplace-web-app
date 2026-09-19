@@ -5,6 +5,7 @@ from functools import wraps
 from flask import g
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
 from jwt import ExpiredSignatureError
+from pydantic import ValidationError
 
 from app.utils.logger import logger
 
@@ -48,6 +49,12 @@ def jwt_verify(roles=[".*"], is_2fa=False):
                 return fn(*args, **kwargs)
             except ExpiredSignatureError:
                 return ResponseFactory.bad_request("Token has expired!")
+            except ValidationError:
+                # Not a JWT problem: fn() raised this validating its own
+                # payload (Schema(**request.get_json())). Let it propagate
+                # to app.errors' ValidationError handler instead of being
+                # reported as a JWT exception below.
+                raise
             except Exception as e:
                 traceback.print_exc()
                 logger.error(f"[SECURITY] JWT Exception: {e}")

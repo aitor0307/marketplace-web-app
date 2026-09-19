@@ -5,7 +5,6 @@ from werkzeug.utils import secure_filename
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
-from app.decorators.validation import validate_payload
 from app.models import Image, Listing, User
 from app.schemas.listings import CreateListingPayload, ListListingsQuery
 
@@ -69,8 +68,8 @@ def delete_listing(user, listing_id):
 
 @listings_ops_bp.route("", methods=["GET"])
 @api_doc("List listings, optionally filtered by condition/price range", tags=["listings"], auth=False)
-@validate_payload(ListListingsQuery, source="query")
-def list_listings_operation(payload: ListListingsQuery):
+def list_listings_operation():
+    payload = ListListingsQuery(**request.args.to_dict())
     listings = filter_listings(
         condition=payload.condition, price_min=payload.price_min, price_max=payload.price_max
     )
@@ -89,14 +88,16 @@ def get_listing_operation(listing_id):
 @listings_ops_bp.route("", methods=["POST"])
 @api_doc("Create a listing with an image upload", tags=["listings"])
 @jwt_verify()
-@validate_payload(CreateListingPayload, source="form")
-def create_listing_operation(payload: CreateListingPayload):
+def create_listing_operation():
     user = User.get_by_id(g.user_id)
+    payload = CreateListingPayload(**request.form.to_dict())
+
     # The image itself isn't representable as a pydantic field: it's a
     # file stream, not JSON/form scalar data, so it's read separately.
     image_file = request.files.get("image")
     if image_file is None:
         return jsonify(error="An image file is required"), 400
+
     listing, image = create_listing(
         user=user,
         title=payload.title,

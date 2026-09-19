@@ -1,8 +1,7 @@
-from flask import Blueprint, g, jsonify
+from flask import Blueprint, g, jsonify, request
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
-from app.decorators.validation import validate_payload
 from app.models import Favorite, Listing, User
 from app.schemas.users import UpdateUserPayload
 
@@ -45,12 +44,13 @@ def get_user_operation(user_id):
 @users_ops_bp.route("/<int:user_id>", methods=["PUT"])
 @api_doc("Update a user profile (self only)", tags=["users"])
 @jwt_verify()
-@validate_payload(UpdateUserPayload)
-def update_user_operation(user_id, payload: UpdateUserPayload):
+def update_user_operation(user_id):
     if user_id != g.user_id:
         return jsonify(error="Forbidden: can only edit your own profile"), 403
     user = get_user(user_id)
     if user is None:
         return jsonify(error="User not found"), 404
+
+    payload = UpdateUserPayload(**(request.get_json(silent=True) or {}))
     update_user(user, **payload.model_dump(exclude_none=True))
     return jsonify(user=user.to_dict())

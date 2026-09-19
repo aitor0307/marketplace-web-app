@@ -4,11 +4,10 @@
 blueprint calls directly for the session-based web login. The Flask routes
 below wrap the same logic for API clients and hand back JWTs.
 """
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from app.decorators.docs import api_doc
-from app.decorators.validation import validate_payload
 from app.models import User
 from app.schemas.auth import LoginPayload, RegisterPayload
 
@@ -39,8 +38,12 @@ def issue_tokens(user):
 
 @auth_ops_bp.route("/register", methods=["POST"])
 @api_doc("Register a new user", tags=["auth"], auth=False)
-@validate_payload(RegisterPayload)
-def register_operation(payload: RegisterPayload):
+def register_operation():
+    # Constructing the model from the raw body is the validation: an
+    # invalid payload raises pydantic.ValidationError here, which
+    # app.errors' errorhandler turns into a 400.
+    payload = RegisterPayload(**(request.get_json(silent=True) or {}))
+
     if User.query.filter_by(email=payload.email).first() is not None:
         return jsonify(error="Email already registered"), 409
 
@@ -56,8 +59,8 @@ def register_operation(payload: RegisterPayload):
 
 @auth_ops_bp.route("/login", methods=["POST"])
 @api_doc("Exchange credentials for a JWT access/refresh token pair", tags=["auth"], auth=False)
-@validate_payload(LoginPayload)
-def login_operation(payload: LoginPayload):
+def login_operation():
+    payload = LoginPayload(**(request.get_json(silent=True) or {}))
     user = authenticate_user(payload.email, payload.password)
     if user is None:
         return jsonify(error="Invalid email or password"), 401
