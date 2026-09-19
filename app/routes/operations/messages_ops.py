@@ -1,10 +1,11 @@
-from flask import Blueprint, current_app, jsonify, request, url_for
-from flask_jwt_extended import get_jwt_identity
+from flask import Blueprint, current_app, g, jsonify, url_for
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
+from app.decorators.validation import validate_payload
 from app.email import send_email
 from app.models import User
+from app.schemas.messages import SendMessagePayload
 
 messages_ops_bp = Blueprint("ops_messages", __name__, url_prefix="/api/v1/users")
 
@@ -28,13 +29,11 @@ def send_message(sender, recipient, subject, body):
 @messages_ops_bp.route("/<int:user_id>/messages", methods=["POST"])
 @api_doc("Send another user a message", tags=["messages"])
 @jwt_verify()
-def send_message_operation(user_id):
-    sender = User.get_by_id(get_jwt_identity())
+@validate_payload(SendMessagePayload)
+def send_message_operation(user_id, payload: SendMessagePayload):
+    sender = User.get_by_id(g.user_id)
     recipient = User.get_by_id(user_id)
     if recipient is None:
         return jsonify(error="User not found"), 404
-    data = request.get_json(silent=True) or {}
-    if not data.get("subject") or not data.get("body"):
-        return jsonify(error="subject and body are required"), 400
-    send_message(sender, recipient, data["subject"], data["body"])
+    send_message(sender, recipient, payload.subject, payload.body)
     return jsonify(sent=True), 201

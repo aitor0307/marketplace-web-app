@@ -1,5 +1,4 @@
-from flask import Blueprint, jsonify
-from flask_jwt_extended import get_jwt_identity
+from flask import Blueprint, g, jsonify
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
@@ -19,6 +18,6 @@ def add_favorite(user, listing_id):
 @api_doc("Add a listing to the current user's favorites", tags=["favorites"])
 @jwt_verify()
 def add_favorite_operation(listing_id):
-    user = User.get_by_id(get_jwt_identity())
+    user = User.get_by_id(g.user_id)
     favorite, created = add_favorite(user, listing_id)
     return jsonify(favorite=favorite.to_dict(), created=created), 201 if created else 200

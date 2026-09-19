@@ -46,9 +46,25 @@ def test_create_listing_with_valid_token_reaches_business_logic(client):
     response = client.post(
         "/api/v1/listings",
         headers={"Authorization": "Bearer " + access_token},
-        data={"title": "Bike"},
+        data={"title": "Bike", "body": "Barely used", "condition": "Used", "price": "45"},
     )
-    # jwt_verify()'s default roles=[".*"] lets the USER role through, so
-    # this 400s on the missing image (business logic), not on auth.
+    # jwt_verify()'s default roles=[".*"] lets the USER role through and
+    # the form fields clear CreateListingPayload validation, so this 400s
+    # on the missing image (business logic), not on auth or the payload.
     assert response.status_code == 400
     assert response.get_json()["error"] == "An image file is required"
+
+
+def test_create_listing_rejects_invalid_payload(client):
+    register_response = client.post("/api/v1/auth/register", json=register_payload())
+    access_token = register_response.get_json()["access_token"]
+
+    response = client.post(
+        "/api/v1/listings",
+        headers={"Authorization": "Bearer " + access_token},
+        data={"title": "Bike"},  # missing body/condition/price
+    )
+    assert response.status_code == 400
+    body = response.get_json()
+    assert body["success"] is False
+    assert any(err["loc"] == ["body"] for err in body["message"])

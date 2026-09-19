@@ -1,12 +1,13 @@
 import os
 
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import get_jwt_identity
+from flask import Blueprint, current_app, g, jsonify, request
 from werkzeug.utils import secure_filename
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
+from app.decorators.validation import validate_payload
 from app.models import Image, Listing, User
+from app.schemas.listings import CreateListingPayload, ListListingsQuery
 
 listings_ops_bp = Blueprint("ops_listings", __name__, url_prefix="/api/v1/listings")
 
@@ -15,10 +16,10 @@ def filter_listings(condition=None, price_min=None, price_max=None):
     query = Listing.query
     if condition:
         query = query.filter(Listing.condition == condition)
-    if price_min:
-        query = query.filter(Listing.price >= float(price_min))
-    if price_max:
-        query = query.filter(Listing.price <= float(price_max))
+    if price_min is not None:
+        query = query.filter(Listing.price >= price_min)
+    if price_max is not None:
+        query = query.filter(Listing.price <= price_max)
     return query.order_by(Listing.timestamp.desc()).all()
 
 
@@ -49,7 +50,7 @@ def save_listing_image(listing_id, image_file):
 
 def create_listing(user, title, body, condition, price, image_file):
     listing = Listing.create(
-        title=title, body=body, condition=condition, price=float(price), user_id=user.id
+        title=title, body=body, condition=condition, price=price, user_id=user.id
     )
     image = save_listing_image(listing.id, image_file)
     return listing, image
@@ -68,11 +69,10 @@ def delete_listing(user, listing_id):
 
 @listings_ops_bp.route("", methods=["GET"])
 @api_doc("List listings, optionally filtered by condition/price range", tags=["listings"], auth=False)
-def list_listings_operation():
+@validate_payload(ListListingsQuery, source="query")
+def list_listings_operation(payload: ListListingsQuery):
     listings = filter_listings(
-        condition=request.args.get("condition"),
-        price_min=request.args.get("price_min"),
-        price_max=request.args.get("price_max"),
+        condition=payload.condition, price_min=payload.price_min, price_max=payload.price_max
     )
     return jsonify(listings=[listing.to_dict() for listing in listings])
 
@@ -89,18 +89,20 @@ def get_listing_operation(listing_id):
 @listings_ops_bp.route("", methods=["POST"])
 @api_doc("Create a listing with an image upload", tags=["listings"])
 @jwt_verify()
-def create_listing_operation():
-    user = User.get_by_id(get_jwt_identity())
-    form = request.form
+@validate_payload(CreateListingPayload, source="form")
+def create_listing_operation(payload: CreateListingPayload):
+    user = User.get_by_id(g.user_id)
+    # The image itself isn't representable as a pydantic field: it's a
+    # file stream, not JSON/form scalar data, so it's read separately.
     image_file = request.files.get("image")
     if image_file is None:
         return jsonify(error="An image file is required"), 400
     listing, image = create_listing(
         user=user,
-        title=form.get("title"),
-        body=form.get("body"),
-        condition=form.get("condition"),
-        price=form.get("price"),
+        title=payload.title,
+        body=payload.body,
+        condition=payload.condition,
+        price=payload.price,
         image_file=image_file,
     )
     return jsonify(listing=listing.to_dict(), image=image.to_dict()), 201
@@ -110,7 +112,7 @@ def create_listing_operation():
 @api_doc("Delete a listing you authored", tags=["listings"])
 @jwt_verify()
 def delete_listing_operation(listing_id):
-    user = User.get_by_id(get_jwt_identity())
+    user = User.get_by_id(g.user_id)
     listing, error = delete_listing(user, listing_id)
     if error:
         status = 404 if listing is None and error == "Listing not found" else 403
