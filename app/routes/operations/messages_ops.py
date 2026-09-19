@@ -26,7 +26,7 @@ def send_message(sender, recipient, subject, body):
 
 
 @messages_ops_bp.route("/<int:user_id>/messages", methods=["POST"])
-@api_doc("Send another user a message", tags=["messages"])
+@api_doc("Send another user a message", tags=["messages"], request_model=SendMessagePayload)
 @jwt_verify()
 def send_message_operation(user_id):
     sender = User.get_by_id(g.user_id)

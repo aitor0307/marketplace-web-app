@@ -42,7 +42,7 @@ def get_user_operation(user_id):
 
 
 @users_ops_bp.route("/<int:user_id>", methods=["PUT"])
-@api_doc("Update a user profile (self only)", tags=["users"])
+@api_doc("Update a user profile (self only)", tags=["users"], request_model=UpdateUserPayload)
 @jwt_verify()
 def update_user_operation(user_id):
     if user_id != g.user_id:

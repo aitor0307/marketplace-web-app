@@ -7,6 +7,7 @@ from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import Image, Listing, User
 from app.schemas.listings import CreateListingPayload, ListListingsQuery
+from tools.apidocs import pydantic_query_params
 
 listings_ops_bp = Blueprint("ops_listings", __name__, url_prefix="/api/v1/listings")
 
@@ -67,7 +68,12 @@ def delete_listing(user, listing_id):
 
 
 @listings_ops_bp.route("", methods=["GET"])
-@api_doc("List listings, optionally filtered by condition/price range", tags=["listings"], auth=False)
+@api_doc(
+    "List listings, optionally filtered by condition/price range",
+    tags=["listings"],
+    auth=False,
+    parameters=pydantic_query_params(ListListingsQuery),
+)
 def list_listings_operation():
     payload = ListListingsQuery(**request.args.to_dict())
     listings = filter_listings(
@@ -86,7 +92,13 @@ def get_listing_operation(listing_id):
 
 
 @listings_ops_bp.route("", methods=["POST"])
-@api_doc("Create a listing with an image upload", tags=["listings"])
+@api_doc(
+    "Create a listing with an image upload",
+    description="Also requires a multipart 'image' file field alongside these text fields.",
+    tags=["listings"],
+    request_model=CreateListingPayload,
+    request_content_type="multipart/form-data",
+)
 @jwt_verify()
 def create_listing_operation():
     user = User.get_by_id(g.user_id)

@@ -10,6 +10,8 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from app.decorators.docs import api_doc
 from app.models import OAuthAccount, User
 from app.schemas.auth import LoginPayload, OAuthLoginPayload, RegisterPayload
+from app.schemas.common import AuthResponse
+from tools.apidocs import json_response, pydantic_response, responses
 
 auth_ops_bp = Blueprint("ops_auth", __name__, url_prefix="/api/v1/auth")
 
@@ -90,7 +92,16 @@ def find_or_create_oauth_user(provider, provider_user_id, email, name):
 
 
 @auth_ops_bp.route("/register", methods=["POST"])
-@api_doc("Register a new user", tags=["auth"], auth=False)
+@api_doc(
+    "Register a new user",
+    tags=["auth"],
+    auth=False,
+    request_model=RegisterPayload,
+    responses=responses(
+        created=pydantic_response(AuthResponse, "Newly created user + JWT tokens"),
+        conflict=json_response({"type": "object"}, "Email already registered"),
+    ),
+)
 def register_operation():
     # Constructing the model from the raw body is the validation: an
     # invalid payload raises pydantic.ValidationError here, which
@@ -111,7 +122,16 @@ def register_operation():
 
 
 @auth_ops_bp.route("/login", methods=["POST"])
-@api_doc("Exchange credentials for a JWT access/refresh token pair", tags=["auth"], auth=False)
+@api_doc(
+    "Exchange credentials for a JWT access/refresh token pair",
+    tags=["auth"],
+    auth=False,
+    request_model=LoginPayload,
+    responses=responses(
+        ok=pydantic_response(AuthResponse, "Authenticated user + JWT tokens"),
+        unauthorized=json_response({"type": "object"}, "Invalid email or password"),
+    ),
+)
 def login_operation():
     payload = LoginPayload(**(request.get_json(silent=True) or {}))
     user = authenticate_user(payload.email, payload.password)
@@ -125,6 +145,13 @@ def login_operation():
     "Register or log in with a third-party provider's ID token (Google today)",
     tags=["auth"],
     auth=False,
+    request_model=OAuthLoginPayload,
+    responses=responses(
+        ok=pydantic_response(AuthResponse, "Existing user, now linked/re-authenticated"),
+        created=pydantic_response(AuthResponse, "Newly created user, linked on first sign-in"),
+        bad_request=json_response({"type": "object"}, "Unsupported provider"),
+        unauthorized=json_response({"type": "object"}, "Invalid or expired OAuth token"),
+    ),
 )
 def oauth_login_operation():
     payload = OAuthLoginPayload(**(request.get_json(silent=True) or {}))
