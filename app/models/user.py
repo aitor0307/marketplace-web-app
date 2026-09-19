@@ -22,12 +22,15 @@ class User(UserMixin, CRUDMixin, db.Model):
     last_seen = db.Column(db.DateTime)
 
     listings = db.relationship("Listing", backref="author", lazy="dynamic")
+    oauth_accounts = db.relationship("OAuthAccount", backref="user", lazy="dynamic")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        # An OAuth-only user (Google/Apple sign-in, no password set) has no
+        # hash to compare against.
+        return bool(self.password_hash) and check_password_hash(self.password_hash, password)
 
     def avatar(self, size):
         digest = md5(self.email.lower().encode("utf-8")).hexdigest()

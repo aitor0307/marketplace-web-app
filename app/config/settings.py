@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     gchat_webhook: Optional[str] = Field(None, alias="GCHAT_WEBHOOK")
     sentry_dsn: Optional[str] = Field(None, alias="SENTRY_DSN")
 
+    # --- OAuth login (Google today; add another client id + verifier in
+    # app/routes/operations/auth_ops.py for Apple/others) --------------------
+    google_oauth_client_id: Optional[str] = Field(None, alias="GOOGLE_OAUTH_CLIENT_ID")
+
     @computed_field  # type: ignore[misc]
     @property
     def sqlalchemy_database_uri(self) -> str:

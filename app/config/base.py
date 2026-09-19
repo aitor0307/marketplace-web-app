@@ -67,6 +67,9 @@ class Config:
     GCHAT_WEBHOOK = settings.gchat_webhook
     SENTRY_DSN = settings.sentry_dsn
 
+    # --- OAuth login -----------------------------------------------------------
+    GOOGLE_OAUTH_CLIENT_ID = settings.google_oauth_client_id
+
     @staticmethod
     def init_app(app):
         """Hook for environment-specific runtime setup (logging, etc.)."""

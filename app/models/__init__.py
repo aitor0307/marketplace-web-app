@@ -4,6 +4,7 @@ from app.models.user import User, ROLE_ADMIN, ROLE_USER
 from app.models.listing import Listing
 from app.models.image import Image
 from app.models.favorite import Favorite
+from app.models.oauth_account import OAuthAccount, PROVIDER_APPLE, PROVIDER_GOOGLE
 
 __all__ = [
     "CRUDMixin",
@@ -13,4 +14,7 @@ __all__ = [
     "Listing",
     "Image",
     "Favorite",
+    "OAuthAccount",
+    "PROVIDER_GOOGLE",
+    "PROVIDER_APPLE",
 ]
