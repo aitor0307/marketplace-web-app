@@ -53,6 +53,11 @@ class Settings(BaseSettings):
 
     app_host: str = Field("http://localhost:5000", alias="APP_HOST")
 
+    # --- Logging / observability --------------------------------------------
+    log_level: str = Field("INFO", alias="LOG_LEVEL")
+    gchat_webhook: Optional[str] = Field(None, alias="GCHAT_WEBHOOK")
+    sentry_dsn: Optional[str] = Field(None, alias="SENTRY_DSN")
+
     @computed_field  # type: ignore[misc]
     @property
     def sqlalchemy_database_uri(self) -> str:

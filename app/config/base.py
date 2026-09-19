@@ -1,3 +1,4 @@
+import logging
 import os
 
 from app.config.settings import get_settings
@@ -18,6 +19,11 @@ class Config:
     ENV = "base"
     DEBUG = False
     TESTING = False
+
+    # app.utils.logger reads this directly (it's imported before any app
+    # exists), so it mirrors settings.app_env rather than the per-subclass
+    # ENV label above.
+    ENVIRONMENT = settings.app_env
 
     SECRET_KEY = settings.secret_key
 
@@ -55,6 +61,11 @@ class Config:
     ADMINS = settings.admins_list
 
     HOST = settings.app_host
+
+    # --- Logging / observability --------------------------------------------
+    LOG_LEVEL = getattr(logging, settings.log_level.upper(), logging.INFO)
+    GCHAT_WEBHOOK = settings.gchat_webhook
+    SENTRY_DSN = settings.sentry_dsn
 
     @staticmethod
     def init_app(app):
