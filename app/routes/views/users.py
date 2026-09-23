@@ -2,6 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from app.forms import EditProfileForm
+from app.routes.operations.listings_ops import get_listing_image
 from app.routes.operations.users_ops import get_user, get_user_favorites, get_user_listings, update_user
 
 views_users_bp = Blueprint("views_users", __name__)
@@ -14,10 +15,12 @@ def view_user(user_id):
         abort(404)
     listings = get_user_listings(user)
     favorites = get_user_favorites(user) if user == current_user else []
+    images = {listing.id: get_listing_image(listing.id) for listing in listings}
     return render_template(
         "user.html",
         user=user,
         listings=listings,
+        images=images,
         title="View Profile",
         user_info=False,
         favorites=favorites,
