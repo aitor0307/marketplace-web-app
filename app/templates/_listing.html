@@ -1,5 +1,5 @@
 <div class="listing mb-4 ml-4">
-    <a class="listing-a" href="{{ url_for('listing', id=listing.id) }}">
+    <a class="listing-a" href="{{ url_for('views_listings.listing_detail', listing_id=listing.id) }}">
         <div class="price p-1">${{ listing.price }}</div>
         <div class="container-fluid image-container">
             <div>
@@ -8,13 +8,13 @@
         </div>
     </a>
     <div class="container-fluid">
-        <a class="listing-a" href="{{ url_for('listing', id=listing.id) }}">
+        <a class="listing-a" href="{{ url_for('views_listings.listing_detail', listing_id=listing.id) }}">
             <p class="condition m-0">{{ listing.condition }}</p>
             <p class="m-0">{{ listing.title }}</p>
             <p class="m-0 time-created">Posted {{ moment(listing.timestamp).fromNow() }}</p>
         </a>
         {% if user_info %}
-            <a class="user-a" href="{{ url_for('user', id=users[listing.id].id) }}">
+            <a class="user-a" href="{{ url_for('views_users.view_user', user_id=users[listing.id].id) }}">
                 <div class="user-info pt-1 mb-1 mt-2">
                     <img height="40" width="auto" src="{{ users[listing.id].avatar(40) }}"/>
                     <p class="ml-1">{{ users[listing.id].name }}</p>

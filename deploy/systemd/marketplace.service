@@ -1,0 +1,31 @@
+[Unit]
+Description=Marketplace gunicorn application server
+Requires=marketplace.socket
+After=network.target postgresql.service redis-server.service
+
+[Service]
+Type=notify
+User=marketplace
+Group=marketplace
+RuntimeDirectory=marketplace
+WorkingDirectory=/opt/marketplace
+EnvironmentFile=/opt/marketplace/.env
+ExecStart=/opt/marketplace/venv/bin/gunicorn \
+    -c /opt/marketplace/docker/gunicorn.conf.py \
+    --bind unix:/run/marketplace/gunicorn.sock \
+    wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=3
+
+# Sandboxing: the service only needs to read the app dir, its runtime
+# socket dir, and its own log directory.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/marketplace/logs /opt/marketplace/app/static/listing_images
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

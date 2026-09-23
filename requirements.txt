@@ -1,24 +1,23 @@
-certifi==2019.9.11
-chardet==3.0.4
-Click==7.0
-Flask==1.1.1
-Flask-WTF==0.14.2
+Flask
+Werkzeug
+Flask-WTF
+Flask-Login
+Flask-Mail
+Flask-Moment
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+PyJWT
+Bootstrap-Flask
+alembic
+psycopg2-binary
+redis
 gunicorn
-idna==2.8
-itsdangerous==1.1.0
-Jinja2==2.11.3
-MarkupSafe==1.1.1
-requests==2.22.0
-urllib3==1.25.8
-Werkzeug==0.16.0
-WTForms==2.2.1
-flask_login
-flask_uploads
-flask_mail
-flask_moment
-flask_bootstrap
-flask_migrate
-flask_sqlalchemy
-# hashlib
-# app
-# config
+pydantic
+pydantic-settings
+email-validator
+requests
+sentry-sdk
+opentelemetry-api
+google-auth
+apispec
