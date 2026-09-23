@@ -15,7 +15,7 @@ class User(UserMixin, CRUDMixin, db.Model):
 
     name = db.Column(db.String(30))
     email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(256))
     state = db.Column(db.String(20))
     city = db.Column(db.String(50))
     role = db.Column(db.String(20), default=ROLE_USER, nullable=False)
