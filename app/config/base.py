@@ -52,11 +52,15 @@ class Config:
     IMAGES_FOLDER = os.path.join(basedir, "app", "static", "listing_images")
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
 
-    # --- Mail --------------------------------------------------------------------
-    MAIL_SERVER = settings.mail_server
-    MAIL_PORT = settings.mail_port
-    MAIL_USE_TLS = settings.mail_use_tls
-    MAIL_USERNAME = settings.mail_username
+    # --- Mail (Gmail SMTP) --------------------------------------------------------
+    # Everything but the app password is a constant; override per environment
+    # in the subclasses if one needs a different account.
+    MAIL_SERVER = "smtp.googlemail.com"
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
+    # Gmail account the app sends from; also used as the From address.
+    MAIL_USERNAME = "aitor.gastaminza@clubesquivaldaran.com"
     MAIL_PASSWORD = settings.mail_password
     ADMINS = settings.admins_list
 

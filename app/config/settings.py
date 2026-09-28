@@ -44,10 +44,8 @@ class Settings(BaseSettings):
     jwt_refresh_token_expires: int = Field(2592000, alias="JWT_REFRESH_TOKEN_EXPIRES")
 
     # --- Mail ------------------------------------------------------------------
-    mail_server: str = Field("smtp.googlemail.com", alias="MAIL_SERVER")
-    mail_port: int = Field(587, alias="MAIL_PORT")
-    mail_use_tls: bool = Field(True, alias="MAIL_USE_TLS")
-    mail_username: Optional[str] = Field(None, alias="MAIL_USERNAME")
+    # Server/port/TLS/username are constants in app/config/base.py; only the
+    # secret comes from the environment.
     mail_password: Optional[str] = Field(None, alias="MAIL_PASSWORD")
     admins: str = Field("", alias="ADMINS")
 
