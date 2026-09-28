@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 
 from app.forms import EditProfileForm
 from app.routes.operations.listings_ops import get_listing_image
+from app.routes.operations.messages_ops import get_conversation, get_user_messages
 from app.routes.operations.users_ops import get_user, get_user_favorites, get_user_listings, update_user
 
 views_users_bp = Blueprint("views_users", __name__)
@@ -16,6 +17,14 @@ def view_user(user_id):
     listings = get_user_listings(user)
     favorites = get_user_favorites(user) if user == current_user else []
     images = {listing.id: get_listing_image(listing.id) for listing in listings}
+    # Only participants can see messages: your own profile shows all of yours,
+    # someone else's shows just your conversation with them.
+    if not current_user.is_authenticated:
+        messages = []
+    elif user == current_user:
+        messages = get_user_messages(user)
+    else:
+        messages = get_conversation(current_user, user)
     return render_template(
         "user.html",
         user=user,
@@ -24,6 +33,7 @@ def view_user(user_id):
         title="View Profile",
         user_info=False,
         favorites=favorites,
+        messages=messages,
     )
 
 
