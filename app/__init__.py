@@ -28,7 +28,7 @@ def create_app(config_name=None):
 
 def _init_extensions(app):
     db.init_app(app)
-    migrate.init_app(app, db)
+    # migrate.init_app(app, db) # We do not need it everytime
     login.init_app(app)
     mail.init_app(app)
     bootstrap.init_app(app)

@@ -31,7 +31,7 @@ def index():
     users = {listing.id: listing.author for listing in listings}
     return render_template(
         "index.html",
-        title="Listings",
+        title="listings",
         listings=listings,
         images=images,
         users=users,
@@ -67,7 +67,7 @@ def listing_detail(listing_id):
     return render_template(
         "listing.html",
         listing=listing,
-        title="View Listing",
+        title="view listing",
         image=image,
         user=listing.author,
         current_user=current_user,

@@ -1,7 +1,7 @@
 {% extends "bootstrap_base.html" %}
 
 {% block title %}
-    {% if title %}{{ title }} - Marketplace{% else %}Marketplace{% endif %}
+    {% if title %}{{ title }} - cevapop{% else %}cevapop{% endif %}
 {% endblock %}
 
 {% block navbar %}
@@ -10,23 +10,33 @@
             <ul class="nav navbar-left">
                 <li class="nav-item">
                     <a class="navbar-brand" href="{{ url_for('views_listings.index') }}">
-                        <img src="../static/assets/logo2.png" width="30" height="30" class="d-inline-block align-top" alt="">
-                        Marketplace
+                        <img src="../static/assets/logo3.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                        ceva marketplace
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('views_listings.index') }}">Listings</a>
+                    <a class="nav-link" href="{{ url_for('views_listings.index') }}">
+                        <img src="../static/assets/favicon.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                        listings
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('views_listings.new_listing') }}">Sell</a>
+                    <a class="nav-link" href="{{ url_for('views_listings.new_listing') }}">
+                        <img src="../static/assets/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                        sell
+                    </a>
                 </li>
             </ul>
             <ul class="nav navbar-right">
                 {% if current_user.is_anonymous %}
-                <li class="nav-item"><a href="{{ url_for('views_auth.login') }}">Login</a></li>
+                <a class="navbar-brand" href="{{ url_for('views_auth.login') }}">
+                        <img src="../static/assets/priceTag.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                        login
+                </a>
+                <!--<li class="nav-item"><a href="{{ url_for('views_auth.login') }}">login</a></li>-->
                 {% else %}
-                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_users.view_user', user_id=current_user.id) }}">Profile</a></li>
-                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_auth.logout') }}">Logout</a></li>
+                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_users.view_user', user_id=current_user.id) }}">profile</a></li>
+                <li class="nav-item"><a class="nav-link"  href="{{ url_for('views_auth.logout') }}">logout</a></li>
                 {% endif %}
             </ul>
         </div>

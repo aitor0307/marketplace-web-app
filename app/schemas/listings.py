@@ -11,6 +11,7 @@ class CreateListingPayload(BaseModel):
     body: str = Field(min_length=1, max_length=1000)
     condition: str
     price: float = Field(gt=0)
+    tags: Optional[list] = Field(default=[])
 
 
 class ListListingsQuery(BaseModel):
