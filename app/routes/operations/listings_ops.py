@@ -32,6 +32,8 @@ def get_listing_image(listing_id):
 
 
 def save_listing_image(listing_id, image_file):
+    # TODO set to store to a secure bucket not to filesystem if set up
+    # Maybe handle it directly in the Storage class, where we can set to filesystem or bucket.
     filename, ext = os.path.splitext(secure_filename(image_file.filename))
     ext = ext.lstrip(".")
     instance = 0
@@ -48,9 +50,9 @@ def save_listing_image(listing_id, image_file):
     )
 
 
-def create_listing(user, title, body, condition, price, image_file):
+def create_listing(user, title, body, condition, price, image_file, tags):
     listing = Listing.create(
-        title=title, body=body, condition=condition, price=price, user_id=user.id
+        title=title, body=body, condition=condition, price=price, user_id=user.id, external_data={"tags": tags}
     )
     image = save_listing_image(listing.id, image_file)
     return listing, image
@@ -117,6 +119,7 @@ def create_listing_operation():
         condition=payload.condition,
         price=payload.price,
         image_file=image_file,
+        tags=payload.tags
     )
     return jsonify(listing=listing.to_dict(), image=image.to_dict()), 201
 
