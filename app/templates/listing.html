@@ -36,7 +36,7 @@
                                     <script>findDistance();</script>
                                 {% endif %}
                                 {% if current_user != user %}
-                                    <p class="m-0"><a href="{{ url_for('views_messages.message', user_id=user.id) }}">Send Message</a></p>
+                                    <p class="m-0"><a href="{{ url_for('views_messages.message', user_id=user.id, listing_id=listing.id) }}">Send Message</a></p>
                                 {% endif %}
                             </td>
                         </tr>

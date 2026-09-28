@@ -1,9 +1,28 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField
-from wtforms import FieldList as ListField
+from wtforms import Field
+from wtforms.widgets import TextArea
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
 from app.models import User
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+class TagListField(Field):
+    """Text input that is parsed into a list of tags split by `separator`."""
+    widget = TextArea()
+
+    def __init__(self, label=None, validators=None, separator=",", **kwargs):
+        super().__init__(label, validators, **kwargs)
+        self.separator = separator
+
+    def _value(self):
+        return f"{self.separator} ".join(self.data) if self.data else ""
+
+    def process_formdata(self, valuelist):
+        if valuelist and valuelist[0]:
+            self.data = [tag.strip() for tag in valuelist[0].split(self.separator) if tag.strip()]
+        else:
+            self.data = []
+
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -51,7 +70,7 @@ class ListingForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=1, max=140)])
     body = TextAreaField('Details', validators=[DataRequired(), Length(min=1, max=1000)])
     price = StringField('Price', validators=[DataRequired()])
-    tags = ListField('Tags', separator=",")
+    tags = TagListField('Tags', separator=",")
     conditions = [('New','New'), ('Used', 'Used'), ('Broken', 'Broken')]
     condition = SelectField('Condition', choices=conditions)
     image = FileField('Image')

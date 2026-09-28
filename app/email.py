@@ -4,11 +4,16 @@ from flask import current_app
 from flask_mail import Message
 
 from app.extensions import mail
+from app.utils.logger import logger
 
 
 def _send_async_email(app, msg):
     with app.app_context():
-        mail.send(msg)
+        try:
+            mail.send(msg)
+        except Exception as e:
+            logger.error(f"Failed to send email '{msg.subject}' to {msg.recipients}")
+            logger.catch_exception(e)
 
 
 def send_email(subject, sender, recipients, text_body, html_body):

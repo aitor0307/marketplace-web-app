@@ -52,6 +52,7 @@ def new_listing():
             condition=form.condition.data,
             price=form.price.data,
             image_file=form.image.data,
+            tags=form.tags.data,
         )
         flash("Listing created")
         return redirect(url_for("views_listings.listing_detail", listing_id=listing.id))
