@@ -33,6 +33,25 @@ def get_user_messages(user):
     )
 
 
+def serialize_message(message):
+    data = message.to_dict()
+    data["sender"] = message.sender.to_summary() if message.sender else None
+    data["recipient"] = message.recipient.to_summary() if message.recipient else None
+    data["listing"] = (
+        {"id": message.listing.id, "title": message.listing.title} if message.listing else None
+    )
+    return data
+
+
+def profile_url_for(user):
+    # The React app owns user pages; the Jinja view is only the fallback
+    # until FRONTEND_URL is configured everywhere.
+    frontend_url = current_app.config.get("FRONTEND_URL")
+    if frontend_url:
+        return "{}/users/{}".format(frontend_url.rstrip("/"), user.id)
+    return current_app.config["HOST"] + url_for("views_users.view_user", user_id=user.id)
+
+
 def send_message(sender, recipient, subject, body, listing_id=None):
     if listing_id is not None:
         listing = Listing.get_by_id(listing_id)
@@ -50,7 +69,7 @@ def send_message(sender, recipient, subject, body, listing_id=None):
     )
 
     try:
-        profile_url = current_app.config["HOST"] + url_for("views_users.view_user", user_id=sender.id)
+        profile_url = profile_url_for(sender)
         html = (
             "<p>You've received a new message from "
             "<a href='{profile_url}'>{name}</a> on Marketplace.</p>"
@@ -91,4 +110,22 @@ def send_message_operation(user_id):
     )
     if error:
         return jsonify(error=error), 400
-    return jsonify(sent=True, message=message.to_dict()), 201
+    return jsonify(sent=True, message=serialize_message(message)), 201
+
+
+@messages_ops_bp.route("/<int:user_id>/messages", methods=["GET"])
+@api_doc(
+    "List messages, newest first",
+    description="On your own id: every message you sent or received. On another "
+    "user's id: only your conversation with them.",
+    tags=["messages"],
+)
+@jwt_verify()
+def list_messages_operation(user_id):
+    current = User.get_by_id(g.user_id)
+    other = User.get_by_id(user_id)
+    if other is None:
+        return jsonify(error="User not found"), 404
+
+    messages = get_user_messages(current) if other.id == current.id else get_conversation(current, other)
+    return jsonify(messages=[serialize_message(message) for message in messages])

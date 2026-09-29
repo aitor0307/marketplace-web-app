@@ -66,6 +66,10 @@ class Config:
 
     HOST = settings.app_host
 
+    # --- React frontend --------------------------------------------------------
+    FRONTEND_URL = settings.frontend_url
+    CORS_ORIGINS = settings.cors_origins_list
+
     # --- Logging / observability --------------------------------------------
     LOG_LEVEL = getattr(logging, settings.log_level.upper(), logging.INFO)
     GCHAT_WEBHOOK = settings.gchat_webhook

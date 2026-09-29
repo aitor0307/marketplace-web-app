@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserPublic(BaseModel):
@@ -12,6 +12,7 @@ class UserPublic(BaseModel):
     state: Optional[str] = None
     city: Optional[str] = None
     role: str
+    avatar_url: Optional[str] = Field(default=None)
 
 
 class AuthResponse(BaseModel):

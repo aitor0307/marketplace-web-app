@@ -39,6 +39,27 @@ class User(UserMixin, CRUDMixin, db.Model):
     def has_role(self, role):
         return self.role == role
 
+    def to_dict(self):
+        # CRUDMixin.to_dict dumps every column; the password hash must never
+        # leave the server, and API clients need the avatar the views build.
+        data = super().to_dict()
+        data.pop("password_hash", None)
+        data["avatar_url"] = self.avatar_url()
+        return data
+
+    def avatar_url(self, size=128):
+        return self.avatar(size) if self.email else None
+
+    def to_summary(self):
+        """The author card embedded in listings and messages."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "city": self.city,
+            "state": self.state,
+            "avatar_url": self.avatar_url(),
+        }
+
 
 @login.user_loader
 def load_user(user_id):

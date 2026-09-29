@@ -51,6 +51,12 @@ class Settings(BaseSettings):
 
     app_host: str = Field("http://localhost:5000", alias="APP_HOST")
 
+    # --- React frontend (frontend/) -------------------------------------------
+    # Where the SPA is served; used for links in outgoing emails.
+    frontend_url: Optional[str] = Field(default=None, alias="FRONTEND_URL")
+    # Comma-separated origins allowed to call /api/* from the browser.
+    cors_origins: str = Field(default="http://localhost:5173", alias="CORS_ORIGINS")
+
     # --- Logging / observability --------------------------------------------
     log_level: str = Field("INFO", alias="LOG_LEVEL")
     gchat_webhook: Optional[str] = Field(None, alias="GCHAT_WEBHOOK")
@@ -87,6 +93,11 @@ class Settings(BaseSettings):
     @property
     def admins_list(self) -> List[str]:
         return [admin for admin in self.admins.split(",") if admin]
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @computed_field  # type: ignore[misc]
     @property

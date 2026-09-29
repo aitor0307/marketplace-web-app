@@ -7,6 +7,7 @@ state between them.
 """
 import redis
 from flask_bootstrap import Bootstrap5
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -22,6 +23,7 @@ mail = Mail()
 bootstrap = Bootstrap5()
 moment = Moment()
 jwt = JWTManager()
+cors = CORS()
 
 
 class RedisClient:

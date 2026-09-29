@@ -1,0 +1,125 @@
+{
+  "common": {
+    "appName": "ceva marketplace",
+    "error": "Algo ha ido mal",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "language": "Idioma"
+  },
+  "nav": {
+    "listings": "Anuncios",
+    "sell": "Vender",
+    "account": "Cuenta",
+    "profile": "Mi perfil",
+    "editProfile": "Editar perfil",
+    "logout": "Cerrar sesión",
+    "login": "Entrar",
+    "register": "Registrarse"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o se ha eliminado.",
+    "backHome": "Volver a los anuncios"
+  },
+  "auth": {
+    "loginTitle": "Hola de nuevo",
+    "loginIntro": "Entra para vender, guardar favoritos y escribir a otros usuarios.",
+    "noAccount": "¿No tienes cuenta? <cta>Regístrate</cta>",
+    "email": "Email",
+    "password": "Contraseña",
+    "signIn": "Entrar",
+    "invalidCredentials": "Email o contraseña incorrectos.",
+    "loginFailed": "No se ha podido iniciar sesión. Inténtalo de nuevo.",
+    "registerTitle": "Crea tu cuenta",
+    "registerIntro": "Compra y vende con gente cerca de ti.",
+    "haveAccount": "¿Ya tienes cuenta? <cta>Entra</cta>",
+    "name": "Nombre",
+    "state": "Provincia",
+    "city": "Ciudad",
+    "repeatPassword": "Repite la contraseña",
+    "createAccount": "Crear cuenta",
+    "emailTaken": "Ya existe una cuenta con ese email.",
+    "registerFailed": "No se ha podido crear la cuenta. Inténtalo de nuevo."
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "maxLength": "Usa {{count}} caracteres como máximo",
+    "minLength": "Usa al menos {{count}} caracteres",
+    "email": "Introduce un email válido",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "positive": "Introduce un importe mayor que 0"
+  },
+  "conditions": {
+    "New": "Nuevo",
+    "Used": "Usado",
+    "Broken": "Roto"
+  },
+  "listings": {
+    "title": "Anuncios",
+    "subtitle": "Todo lo que está a la venta ahora mismo",
+    "sellSomething": "Vender algo",
+    "empty": "No hay anuncios",
+    "emptyDesc": "Prueba con otros filtros o publica el primero.",
+    "posted": "Publicado {{when}}",
+    "condition": "Estado",
+    "anyCondition": "Cualquiera",
+    "priceMin": "Precio mín.",
+    "priceMax": "Precio máx.",
+    "applyFilters": "Aplicar",
+    "clearFilters": "Limpiar",
+    "delete": "Eliminar anuncio",
+    "deleted": "Anuncio eliminado",
+    "deleteTitle": "¿Eliminar este anuncio?",
+    "deleteDesc": "Se retirará del marketplace. No se puede deshacer.",
+    "postedBy": "Publicado por",
+    "messageSeller": "Escribir al vendedor"
+  },
+  "favorites": {
+    "add": "Añadir a favoritos",
+    "inFavorites": "En tus favoritos",
+    "added": "Añadido a favoritos",
+    "already": "Ya está en tus favoritos"
+  },
+  "newListing": {
+    "title": "Vender algo",
+    "subtitle": "Añade una foto y algunos detalles.",
+    "image": "Foto",
+    "imageRequired": "Añade una foto del artículo",
+    "listingTitle": "Título",
+    "details": "Detalles",
+    "price": "Precio",
+    "tags": "Etiquetas",
+    "tagsPlaceholder": "bici, deporte, exterior",
+    "tagsHelp": "Separa las etiquetas con comas.",
+    "submit": "Publicar anuncio",
+    "created": "Anuncio creado",
+    "failed": "No se ha podido crear el anuncio. Inténtalo de nuevo."
+  },
+  "profile": {
+    "lastSeen": "Última conexión: {{when}}",
+    "edit": "Editar perfil",
+    "message": "Escribir a {{name}}",
+    "myFavorites": "Mis favoritos",
+    "myMessages": "Mis mensajes",
+    "messagesWith": "Mensajes con {{name}}",
+    "myListings": "Mis anuncios",
+    "userListings": "Anuncios de {{name}}",
+    "noListings": "Todavía no hay anuncios",
+    "editTitle": "Editar perfil",
+    "updated": "Perfil actualizado",
+    "updateFailed": "No se ha podido actualizar el perfil. Inténtalo de nuevo."
+  },
+  "messages": {
+    "title": "Enviar un mensaje",
+    "to": "Para",
+    "about": "Sobre",
+    "subject": "Asunto",
+    "body": "Mensaje",
+    "send": "Enviar mensaje",
+    "sent": "Mensaje enviado",
+    "failed": "No se ha podido enviar el mensaje. Inténtalo de nuevo.",
+    "you": "Tú",
+    "re": "sobre:"
+  }
+}

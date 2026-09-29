@@ -4,9 +4,10 @@
 blueprint calls directly for the session-based web login. The Flask routes
 below wrap the same logic for API clients and hand back JWTs.
 """
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 from flask_jwt_extended import create_access_token, create_refresh_token
 
+from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import OAuthAccount, User
 from app.schemas.auth import LoginPayload, OAuthLoginPayload, RegisterPayload
@@ -30,12 +31,20 @@ def authenticate_user(email, password):
     return user
 
 
+def _token_claims(user):
+    return {"role": user.role, "user_id": user.id}
+
+
 def issue_tokens(user):
-    claims = {"role": user.role, "user_id": user.id}
+    claims = _token_claims(user)
     return {
         "access_token": create_access_token(identity=str(user.id), additional_claims=claims),
         "refresh_token": create_refresh_token(identity=str(user.id), additional_claims=claims),
     }
+
+
+def issue_access_token(user):
+    return create_access_token(identity=str(user.id), additional_claims=_token_claims(user))
 
 
 def verify_google_id_token(id_token_value):
@@ -172,3 +181,38 @@ def oauth_login_operation():
         name=identity.get("name"),
     )
     return jsonify(user=user.to_dict(), **issue_tokens(user)), 201 if created else 200
+
+
+@auth_ops_bp.route("/me", methods=["GET"])
+@api_doc(
+    "Fetch the user the access token belongs to",
+    tags=["auth"],
+    responses=responses(
+        ok=json_response({"type": "object"}, "The authenticated user"),
+        not_found=json_response({"type": "object"}, "User no longer exists"),
+    ),
+)
+@jwt_verify()
+def me_operation():
+    user = User.get_by_id(g.user_id)
+    if user is None:
+        return jsonify(error="User not found"), 404
+    return jsonify(user=user.to_dict())
+
+
+@auth_ops_bp.route("/refresh", methods=["POST"])
+@api_doc(
+    "Exchange a refresh token (sent as the Bearer token) for a new access token",
+    tags=["auth"],
+    responses=responses(
+        ok=json_response({"type": "object"}, "A fresh access token"),
+        not_found=json_response({"type": "object"}, "User no longer exists"),
+    ),
+)
+@jwt_verify(refresh=True)
+def refresh_operation():
+    # Re-read the user so role changes since the last login land in the new token.
+    user = User.get_by_id(g.user_id)
+    if user is None:
+        return jsonify(error="User not found"), 404
+    return jsonify(access_token=issue_access_token(user))

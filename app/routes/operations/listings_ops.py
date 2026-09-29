@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request, url_for
 from werkzeug.utils import secure_filename
 
 from app.decorators.auth import jwt_verify
@@ -29,6 +29,24 @@ def get_listing(listing_id):
 
 def get_listing_image(listing_id):
     return Image.query.filter_by(listing_id=listing_id).first()
+
+
+def listing_image_url(image):
+    if image is None or not image.src:
+        return None
+    return url_for("static", filename="listing_images/{}".format(image.src))
+
+
+def serialize_listing(listing, image=None):
+    """Listing JSON for API clients: the row plus what the views pull in
+    alongside it (cover image, author card, tags)."""
+    image = image or get_listing_image(listing.id)
+    author = listing.author
+    data = listing.to_dict()
+    data["image_url"] = listing_image_url(image)
+    data["tags"] = (listing.external_data or {}).get("tags") or []
+    data["author"] = author.to_summary() if author is not None else None
+    return data
 
 
 def save_listing_image(listing_id, image_file):
@@ -81,7 +99,7 @@ def list_listings_operation():
     listings = filter_listings(
         condition=payload.condition, price_min=payload.price_min, price_max=payload.price_max
     )
-    return jsonify(listings=[listing.to_dict() for listing in listings])
+    return jsonify(listings=[serialize_listing(listing) for listing in listings])
 
 
 @listings_ops_bp.route("/<int:listing_id>", methods=["GET"])
@@ -90,7 +108,7 @@ def get_listing_operation(listing_id):
     listing = get_listing(listing_id)
     if listing is None:
         return jsonify(error="Listing not found"), 404
-    return jsonify(listing=listing.to_dict())
+    return jsonify(listing=serialize_listing(listing))
 
 
 @listings_ops_bp.route("", methods=["POST"])
@@ -104,7 +122,11 @@ def get_listing_operation(listing_id):
 @jwt_verify()
 def create_listing_operation():
     user = User.get_by_id(g.user_id)
-    payload = CreateListingPayload(**request.form.to_dict())
+    # Tags arrive as a repeated multipart field; to_dict() would keep only
+    # the first one, as a string, so read them as a list explicitly.
+    payload = CreateListingPayload(
+        **{**request.form.to_dict(), "tags": request.form.getlist("tags")}
+    )
 
     # The image itself isn't representable as a pydantic field: it's a
     # file stream, not JSON/form scalar data, so it's read separately.
@@ -121,7 +143,7 @@ def create_listing_operation():
         image_file=image_file,
         tags=payload.tags
     )
-    return jsonify(listing=listing.to_dict(), image=image.to_dict()), 201
+    return jsonify(listing=serialize_listing(listing, image), image=image.to_dict()), 201
 
 
 @listings_ops_bp.route("/<int:listing_id>", methods=["DELETE"])

@@ -3,6 +3,7 @@ from flask import Blueprint, g, jsonify, request
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
 from app.models import Favorite, Listing, User
+from app.routes.operations.listings_ops import serialize_listing
 from app.schemas.users import UpdateUserPayload
 
 users_ops_bp = Blueprint("ops_users", __name__, url_prefix="/api/v1/users")
@@ -54,3 +55,24 @@ def update_user_operation(user_id):
     payload = UpdateUserPayload(**(request.get_json(silent=True) or {}))
     update_user(user, **payload.model_dump(exclude_none=True))
     return jsonify(user=user.to_dict())
+
+
+@users_ops_bp.route("/<int:user_id>/listings", methods=["GET"])
+@api_doc("List a user's listings, newest first", tags=["users"], auth=False)
+def get_user_listings_operation(user_id):
+    user = get_user(user_id)
+    if user is None:
+        return jsonify(error="User not found"), 404
+    return jsonify(listings=[serialize_listing(listing) for listing in get_user_listings(user)])
+
+
+@users_ops_bp.route("/<int:user_id>/favorites", methods=["GET"])
+@api_doc("List a user's favorite listings (self only)", tags=["users"])
+@jwt_verify()
+def get_user_favorites_operation(user_id):
+    if user_id != g.user_id:
+        return jsonify(error="Forbidden: can only view your own favorites"), 403
+    user = get_user(user_id)
+    if user is None:
+        return jsonify(error="User not found"), 404
+    return jsonify(listings=[serialize_listing(listing) for listing in get_user_favorites(user)])
