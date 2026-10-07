@@ -50,7 +50,8 @@ class Config:
 
     # --- Uploads -----------------------------------------------------------------
     IMAGES_FOLDER = os.path.join(basedir, "app", "static", "listing_images")
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB, for the whole request (all images together)
+    MAX_LISTING_IMAGES = 10
 
     # --- Mail (Gmail SMTP) --------------------------------------------------------
     # Everything but the app password is a constant; override per environment
@@ -77,6 +78,11 @@ class Config:
 
     # --- OAuth login -----------------------------------------------------------
     GOOGLE_OAUTH_CLIENT_ID = settings.google_oauth_client_id
+
+    # --- Registration approval ---------------------------------------------------
+    REGISTRATION_KEY = settings.registration_key
+    REGISTRATION_APPROVER_EMAIL = settings.registration_approver_email
+    REGISTRATION_APPROVAL_MAX_AGE = 30 * 24 * 3600  # how long an approval link stays valid (seconds)
 
     @staticmethod
     def init_app(app):

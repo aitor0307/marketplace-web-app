@@ -40,7 +40,11 @@
     "repeatPassword": "Repeat password",
     "createAccount": "Create account",
     "emailTaken": "There is an existing account with that email.",
-    "registerFailed": "Unable to create your account. Please try again."
+    "registerFailed": "Unable to create your account. Please try again.",
+    "registrationKey": "Registration code",
+    "registrationKeyHelp": "If you received a code, enter it to start selling right away. Without it, your account will need to be approved first.",
+    "pendingRegistered": "Account created — pending approval",
+    "pendingRegisteredDesc": "You can browse and message sellers, and you'll be able to publish listings once your account is approved."
   },
   "validation": {
     "required": "This field is required",
@@ -73,7 +77,8 @@
     "deleteTitle": "Delete this listing?",
     "deleteDesc": "It will be removed from the marketplace. This can't be undone.",
     "postedBy": "Posted by",
-    "messageSeller": "Message seller"
+    "messageSeller": "Message seller",
+    "showImage": "Show photo {{index}}"
   },
   "favorites": {
     "add": "Add to my favorites",
@@ -83,9 +88,14 @@
   },
   "newListing": {
     "title": "Sell something",
-    "subtitle": "Add a photo and a few details.",
-    "image": "Photo",
-    "imageRequired": "Add a photo of the item",
+    "subtitle": "Add some photos and a few details.",
+    "image": "Photos",
+    "imageRequired": "Add at least one photo of the item",
+    "imagesHelp": "Up to {{count}} photos. The first one is the cover.",
+    "imagesMax": "You can add up to {{count}} photos",
+    "addImages": "Add photos",
+    "removeImage": "Remove photo",
+    "cover": "Cover",
     "listingTitle": "Title",
     "details": "Details",
     "price": "Price",
@@ -94,7 +104,9 @@
     "tagsHelp": "Separate tags with commas.",
     "submit": "Publish listing",
     "created": "Listing created",
-    "failed": "Unable to create the listing. Please try again."
+    "failed": "Unable to create the listing. Please try again.",
+    "pendingTitle": "Your account is pending approval",
+    "pendingDesc": "You'll be able to publish listings as soon as your account is approved."
   },
   "profile": {
     "lastSeen": "Last seen {{when}}",
@@ -121,5 +133,14 @@
     "failed": "Unable to send the message. Please try again.",
     "you": "You",
     "re": "re:"
+  },
+  "approval": {
+    "title": "Approve new user",
+    "subtitle": "This person registered without a registration code.",
+    "approve": "Approve user",
+    "approved": "User approved",
+    "alreadyActive": "This account is active and can publish listings.",
+    "pendingDesc": "Once approved, they will be able to publish listings.",
+    "failed": "Unable to approve this user. Please try again."
   }
 }

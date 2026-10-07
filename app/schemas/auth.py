@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -7,6 +9,9 @@ class RegisterPayload(BaseModel):
     password: str = Field(min_length=6)
     state: str = Field(min_length=1, max_length=20)
     city: str = Field(min_length=1, max_length=50)
+    # Optional on purpose: without the right key the account is still
+    # created, just "pending" until approved.
+    registration_key: Optional[str] = Field(default=None, max_length=200)
 
 
 class LoginPayload(BaseModel):

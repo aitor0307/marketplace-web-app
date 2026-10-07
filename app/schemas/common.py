@@ -12,6 +12,7 @@ class UserPublic(BaseModel):
     state: Optional[str] = None
     city: Optional[str] = None
     role: str
+    status: str
     avatar_url: Optional[str] = Field(default=None)
 
 

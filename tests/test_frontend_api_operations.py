@@ -7,7 +7,14 @@ import pytest
 def register(client, email="ada@example.com", name="Ada"):
     response = client.post(
         "/api/v1/auth/register",
-        json={"name": name, "email": email, "password": "s3cret!", "state": "Madrid", "city": "Madrid"},
+        json={
+            "name": name,
+            "email": email,
+            "password": "s3cret!",
+            "state": "Madrid",
+            "city": "Madrid",
+            "registration_key": "test-registration-key",
+        },
     )
     assert response.status_code == 201
     return response.get_json()
@@ -17,8 +24,8 @@ def bearer(token):
     return {"Authorization": f"Bearer {token}"}
 
 
-def create_listing(client, token, title="Bike", tags=("red", "fast")):
-    response = client.post(
+def post_listing(client, token, title="Bike", tags=("red", "fast"), filenames=("bike.png",), field="images"):
+    return client.post(
         "/api/v1/listings",
         data={
             "title": title,
@@ -26,11 +33,15 @@ def create_listing(client, token, title="Bike", tags=("red", "fast")):
             "condition": "Used",
             "price": "120",
             "tags": list(tags),
-            "image": (io.BytesIO(b"fake-image-bytes"), "bike.png"),
+            field: [(io.BytesIO(b"fake-image-bytes"), filename) for filename in filenames],
         },
         headers=bearer(token),
         content_type="multipart/form-data",
     )
+
+
+def create_listing(client, token, **kwargs):
+    response = post_listing(client, token, **kwargs)
     assert response.status_code == 201, response.get_json()
     return response.get_json()["listing"]
 
@@ -80,6 +91,31 @@ def test_listing_payload_carries_image_author_and_tags(client):
     listed = client.get("/api/v1/listings").get_json()["listings"]
     assert [listing["id"] for listing in listed] == [created["id"]]
     assert listed[0]["author"]["name"] == "Ada"
+
+
+def test_listing_accepts_multiple_images_in_upload_order(client):
+    auth = register(client)
+    created = create_listing(client, auth["access_token"], filenames=("front.png", "back.png", "side.png"))
+
+    assert [url.rsplit("/", 1)[-1] for url in created["image_urls"]] == ["front0.png", "back0.png", "side0.png"]
+    assert created["image_url"] == created["image_urls"][0]
+
+    fetched = client.get(f"/api/v1/listings/{created['id']}").get_json()["listing"]
+    assert fetched["image_urls"] == created["image_urls"]
+
+
+def test_listing_still_accepts_the_legacy_single_image_field(client):
+    auth = register(client)
+    created = create_listing(client, auth["access_token"], field="image")
+    assert len(created["image_urls"]) == 1
+
+
+def test_listing_rejects_too_many_images(app, client):
+    app.config["MAX_LISTING_IMAGES"] = 2
+    auth = register(client)
+    response = post_listing(client, auth["access_token"], filenames=("a.png", "b.png", "c.png"))
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "A listing can have at most 2 images"
 
 
 def test_user_listings_are_public(client):

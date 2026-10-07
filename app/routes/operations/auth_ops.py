@@ -3,24 +3,116 @@
 ``register_user`` / ``authenticate_user`` are plain functions the view
 blueprint calls directly for the session-based web login. The Flask routes
 below wrap the same logic for API clients and hand back JWTs.
+
+Registration approval: a user who registers with the configured
+REGISTRATION_KEY is active right away. Anyone else (no key, a wrong key, or
+a first-time OAuth sign-in) is created "pending" - they can log in but not
+publish listings - and REGISTRATION_APPROVER_EMAIL gets a signed link to
+approve them.
 """
+import hmac
+
 from flask import Blueprint, current_app, g, jsonify, request
 from flask_jwt_extended import create_access_token, create_refresh_token
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from markupsafe import escape
 
 from app.decorators.auth import jwt_verify
 from app.decorators.docs import api_doc
-from app.models import OAuthAccount, User
+from app.email import send_email
+from app.models import STATUS_ACTIVE, STATUS_PENDING, OAuthAccount, User
 from app.schemas.auth import LoginPayload, OAuthLoginPayload, RegisterPayload
 from app.schemas.common import AuthResponse
+from app.utils.logger import logger
 from tools.apidocs import json_response, pydantic_response, responses
 
 auth_ops_bp = Blueprint("ops_auth", __name__, url_prefix="/api/v1/auth")
 
+APPROVAL_TOKEN_SALT = "registration-approval"
 
-def register_user(name, email, password, state, city):
-    user = User.create(name=name, email=email, state=state, city=city, commit=False)
+
+def registration_key_matches(registration_key):
+    expected = current_app.config.get("REGISTRATION_KEY")
+    if not expected or not registration_key:
+        return False
+    return hmac.compare_digest(registration_key.strip().encode(), expected.encode())
+
+
+def make_approval_serializer():
+    return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt=APPROVAL_TOKEN_SALT)
+
+
+def approval_token_for(user):
+    return make_approval_serializer().dumps({"user_id": user.id})
+
+
+def user_for_approval_token(token):
+    """The user an approval link was issued for, or (None, error) when the
+    link was tampered with, has expired, or the user no longer exists."""
+    try:
+        data = make_approval_serializer().loads(
+            token, max_age=current_app.config["REGISTRATION_APPROVAL_MAX_AGE"]
+        )
+    except SignatureExpired:
+        return None, "This approval link has expired"
+    except BadSignature:
+        return None, "Invalid approval link"
+    user = User.get_by_id(data.get("user_id"))
+    if user is None:
+        return None, "User not found"
+    return user, None
+
+
+def approval_url_for(user):
+    # The link only opens a confirmation page in the React app; the approval
+    # itself is a POST from there, so mail scanners prefetching the link
+    # can't approve anyone.
+    base_url = current_app.config.get("FRONTEND_URL") or current_app.config["HOST"]
+    return "{}/approvals/{}".format(base_url.rstrip("/"), approval_token_for(user))
+
+
+def send_approval_request(user):
+    try:
+        approval_url = approval_url_for(user)
+        html = (
+            "<p>A new user registered on Marketplace without a valid registration key "
+            "and is waiting for approval:</p>"
+            "<ul><li>Name: {name}</li><li>Email: {email}</li><li>Location: {location}</li></ul>"
+            "<p><a href='{approval_url}'>Review and approve this user</a></p>"
+        ).format(
+            name=escape(user.name),
+            email=escape(user.email),
+            location=escape(", ".join(filter(None, [user.city, user.state]))),
+            approval_url=escape(approval_url),
+        )
+        send_email(
+            "New Marketplace user pending approval: {}".format(user.name),
+            current_app.config["MAIL_USERNAME"],
+            [current_app.config["REGISTRATION_APPROVER_EMAIL"]],
+            html,
+            html,
+        )
+    except Exception as e:
+        # The user is already stored, so a mail failure must not fail the registration.
+        logger.error(f"Failed to send the approval request for user {user.id}")
+        logger.catch_exception(e)
+
+
+def register_user(name, email, password, state, city, registration_key=None):
+    status = STATUS_ACTIVE if registration_key_matches(registration_key) else STATUS_PENDING
+    user = User.create(
+        name=name, email=email, state=state, city=city, status=status, commit=False
+    )
     user.set_password(password)
     user.save()
+    if not user.is_approved:
+        send_approval_request(user)
+    return user
+
+
+def approve_user(user):
+    if not user.is_approved:
+        user.approve()
     return user
 
 
@@ -92,7 +184,11 @@ def find_or_create_oauth_user(provider, provider_user_id, email, name):
     user = User.query.filter_by(email=email).first() if email else None
     created = user is None
     if created:
-        user = User.create(name=name or (email or provider_user_id), email=email)
+        # No registration key on this path, so new OAuth users need approval too.
+        user = User.create(
+            name=name or (email or provider_user_id), email=email, status=STATUS_PENDING
+        )
+        send_approval_request(user)
 
     OAuthAccount.create(
         provider=provider, provider_user_id=provider_user_id, email=email, user_id=user.id
@@ -103,6 +199,10 @@ def find_or_create_oauth_user(provider, provider_user_id, email, name):
 @auth_ops_bp.route("/register", methods=["POST"])
 @api_doc(
     "Register a new user",
+    description=(
+        "With the right 'registration_key' the user is active right away; otherwise "
+        "they are created with status 'pending' and an approval link is emailed."
+    ),
     tags=["auth"],
     auth=False,
     request_model=RegisterPayload,
@@ -126,6 +226,7 @@ def register_operation():
         password=payload.password,
         state=payload.state,
         city=payload.city,
+        registration_key=payload.registration_key,
     )
     return jsonify(user=user.to_dict(), **issue_tokens(user)), 201
 
@@ -216,3 +317,38 @@ def refresh_operation():
     if user is None:
         return jsonify(error="User not found"), 404
     return jsonify(access_token=issue_access_token(user))
+
+
+@auth_ops_bp.route("/approvals/<token>", methods=["GET"])
+@api_doc(
+    "Look up the user an emailed approval link is for",
+    tags=["auth"],
+    auth=False,
+    responses=responses(
+        ok=json_response({"type": "object"}, "The user awaiting (or already given) approval"),
+        bad_request=json_response({"type": "object"}, "Invalid or expired approval link"),
+    ),
+)
+def get_approval_operation(token):
+    user, error = user_for_approval_token(token)
+    if error:
+        return jsonify(error=error), 400
+    return jsonify(user=user.to_dict())
+
+
+@auth_ops_bp.route("/approvals/<token>", methods=["POST"])
+@api_doc(
+    "Approve the user an emailed approval link is for",
+    description="The signed token is the authorization; approving twice is a no-op.",
+    tags=["auth"],
+    auth=False,
+    responses=responses(
+        ok=json_response({"type": "object"}, "The now active user"),
+        bad_request=json_response({"type": "object"}, "Invalid or expired approval link"),
+    ),
+)
+def approve_operation(token):
+    user, error = user_for_approval_token(token)
+    if error:
+        return jsonify(error=error), 400
+    return jsonify(user=approve_user(user).to_dict())

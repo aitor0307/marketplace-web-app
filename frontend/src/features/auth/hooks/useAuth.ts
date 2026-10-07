@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
 import { authApi } from '@/features/auth/api/auth.api';
 import type { AuthResponse, LoginRequest, RegisterRequest } from '@/features/auth/types/auth.types';
 import { analyticsService } from '@/services/analyticsService';
@@ -43,4 +43,43 @@ export function useLogout() {
     queryClient.clear();
     analyticsService.track('logout');
   }, [clearSession, queryClient]);
+}
+
+const approvalKey = (token: string) => ['auth', 'approval', token] as const;
+
+export function useApproval(token: string) {
+  return useQuery({
+    queryKey: approvalKey(token),
+    queryFn: () => authApi.getApproval(token),
+    enabled: Boolean(token),
+    retry: false,
+  });
+}
+
+export function useApproveUser(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => authApi.approve(token),
+    onSuccess: (user) => queryClient.setQueryData(approvalKey(token), user),
+  });
+}
+
+/**
+ * Re-reads the signed-in user while they are pending, so an approval that
+ * lands while the app is open unlocks publishing without a reload.
+ */
+export function useRefreshPendingUser() {
+  const user = useSessionStore((s) => s.user);
+  const setUser = useSessionStore((s) => s.setUser);
+  const isPending = user?.status === 'pending';
+  const { data } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => authApi.me(),
+    enabled: isPending,
+    staleTime: 0,
+  });
+  useEffect(() => {
+    if (data) setUser(data);
+  }, [data, setUser]);
+  return isPending;
 }

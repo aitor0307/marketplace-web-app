@@ -23,7 +23,7 @@ export const listingsApi = {
     form.append('condition', input.condition);
     form.append('price', String(input.price));
     input.tags.forEach((tag) => form.append('tags', tag));
-    form.append('image', input.image);
+    input.images.forEach((image) => form.append('images', image));
     return apiClient<{ listing: Listing }>('/api/v1/listings', { method: 'POST', body: form }).then(
       (res) => res.listing,
     );

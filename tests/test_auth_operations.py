@@ -5,6 +5,7 @@ def register_payload(**overrides):
         "password": "s3cret!",
         "state": "California",
         "city": "Oakland",
+        "registration_key": "test-registration-key",
     }
     payload.update(overrides)
     return payload

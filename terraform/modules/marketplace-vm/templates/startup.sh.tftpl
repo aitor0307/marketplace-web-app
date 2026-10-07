@@ -1,0 +1,159 @@
+#!/bin/bash
+# Rendered by Terraform (modules/marketplace-vm). GCE runs it on every boot,
+# so every step must be idempotent. Log: /var/log/marketplace-startup.log
+set -euo pipefail
+exec > >(tee -a /var/log/marketplace-startup.log) 2>&1
+echo "=== marketplace startup $(date -Is) ==="
+
+export DEBIAN_FRONTEND=noninteractive
+DATA_DEV=/dev/disk/by-id/google-${data_disk_name}
+DATA_MNT=/mnt/data
+APP_DIR=/opt/marketplace
+
+# --- 1. Persistent data disk --------------------------------------------------
+# Everything stateful lives on the data disk, bind-mounted into place before
+# any package is installed. A recreated VM then picks up the existing DB,
+# Docker volumes and secrets.
+if ! blkid "$DATA_DEV" >/dev/null 2>&1; then
+  mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard "$DATA_DEV"
+fi
+mkdir -p "$DATA_MNT"
+grep -q " $DATA_MNT " /etc/fstab || echo "$DATA_DEV $DATA_MNT ext4 discard,defaults,nofail 0 2" >> /etc/fstab
+mountpoint -q "$DATA_MNT" || mount "$DATA_MNT"
+
+bind_mount() {
+  mkdir -p "$1" "$2"
+  grep -q " $2 none bind" /etc/fstab || echo "$1 $2 none bind,nofail,x-systemd.requires-mounts-for=$DATA_MNT 0 0" >> /etc/fstab
+  mountpoint -q "$2" || mount "$2"
+}
+bind_mount "$DATA_MNT/postgresql"     /var/lib/postgresql
+bind_mount "$DATA_MNT/postgresql-etc" /etc/postgresql
+bind_mount "$DATA_MNT/docker"         /var/lib/docker
+bind_mount "$DATA_MNT/marketplace"    "$APP_DIR"
+
+%{ if swap_size_gb > 0 ~}
+# --- 1b. Swap (small machine types) -------------------------------------------
+if [ ! -f /swapfile ]; then
+  fallocate -l ${swap_size_gb}G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+fi
+grep -q "^/swapfile " /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab
+swapon --show | grep -q /swapfile || swapon /swapfile
+
+%{ endif ~}
+# --- 2. Packages --------------------------------------------------------------
+# Docker comes from Docker's own apt repo: Debian doesn't ship Compose v2,
+# and this way Debian and Ubuntu images behave the same.
+if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
+  . /etc/os-release
+  apt-get update
+  apt-get install -y ca-certificates curl
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL "https://download.docker.com/linux/$ID/gpg" -o /etc/apt/keyrings/docker.asc
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$ID $VERSION_CODENAME stable" \
+    > /etc/apt/sources.list.d/docker.list
+fi
+
+PACKAGES="postgresql nginx docker-ce docker-ce-cli containerd.io docker-compose-plugin certbot python3-certbot-nginx"
+MISSING=""
+for p in $PACKAGES; do dpkg -s "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"; done
+if [ -n "$MISSING" ]; then
+  apt-get update
+  apt-get install -y $MISSING
+fi
+systemctl enable --now docker postgresql nginx
+
+# --- 3. PostgreSQL (host) -----------------------------------------------------
+# Listens on all interfaces so containers can reach it through the Docker
+# bridge. pg_hba only lets in Docker subnets, and the GCP firewall has no 5432 rule.
+PG_VERSION=$(ls /etc/postgresql | sort -V | tail -1)
+PG_CONF_DIR=/etc/postgresql/$PG_VERSION/main
+echo "listen_addresses = '*'" > "$PG_CONF_DIR/conf.d/marketplace.conf"
+HBA_LINE="host ${postgres_db} ${postgres_user} 172.16.0.0/12 scram-sha-256"
+grep -qF "$HBA_LINE" "$PG_CONF_DIR/pg_hba.conf" || echo "$HBA_LINE" >> "$PG_CONF_DIR/pg_hba.conf"
+systemctl restart postgresql
+until sudo -u postgres pg_isready -q; do sleep 1; done
+
+# The password is generated on the VM the first time and kept on the data
+# disk, so it never enters Terraform state or instance metadata.
+SECRETS_DIR=$DATA_MNT/secrets
+install -d -m 700 "$SECRETS_DIR"
+PW_FILE=$SECRETS_DIR/postgres_password
+[ -s "$PW_FILE" ] || (umask 077 && openssl rand -hex 24 > "$PW_FILE")
+PG_PASSWORD=$(cat "$PW_FILE")
+
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${postgres_user}'" | grep -q 1; then
+  sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE ${postgres_user} LOGIN PASSWORD '$PG_PASSWORD'"
+fi
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${postgres_db}'" | grep -q 1; then
+  sudo -u postgres createdb -O "${postgres_user}" "${postgres_db}"
+fi
+
+# --- 4. App files -------------------------------------------------------------
+mkdir -p "$APP_DIR/data/listing_images"
+chown 1000:1000 "$APP_DIR/data/listing_images"  # appuser inside the image
+
+cat > "$APP_DIR/docker-compose.yml" <<'COMPOSE_EOF'
+${docker_compose}
+COMPOSE_EOF
+
+(umask 077 && cat > "$APP_DIR/db.env" <<DB_EOF
+DATABASE_URL=postgresql+psycopg2://${postgres_user}:$PG_PASSWORD@host.docker.internal:5432/${postgres_db}
+DB_EOF
+)
+
+# Written once with fresh keys; after that it's yours to edit.
+if [ ! -f "$APP_DIR/app.env" ]; then
+  (umask 077 && cat > "$APP_DIR/app.env" <<APP_EOF
+# Application settings; see .env.example in the repo for the full list.
+# After editing: cd $APP_DIR && sudo docker compose up -d
+SECRET_KEY=$(openssl rand -hex 32)
+JWT_SECRET_KEY=$(openssl rand -hex 32)
+LOG_LEVEL=INFO
+APP_HOST=
+FRONTEND_URL=
+CORS_ORIGINS=
+MAIL_SERVER=smtp.googlemail.com
+MAIL_PORT=587
+MAIL_USE_TLS=1
+MAIL_USERNAME=
+MAIL_PASSWORD=
+ADMINS=
+GCHAT_WEBHOOK=
+SENTRY_DSN=
+GOOGLE_OAUTH_CLIENT_ID=
+REGISTRATION_KEY=
+REGISTRATION_APPROVER_EMAIL=aitor.gastaminza@clubesquivaldaran.com
+APP_EOF
+  )
+fi
+
+# --- 5. nginx -----------------------------------------------------------------
+cat > /etc/nginx/sites-available/marketplace <<'NGINX_EOF'
+${nginx_conf}
+NGINX_EOF
+ln -sf /etc/nginx/sites-available/marketplace /etc/nginx/sites-enabled/marketplace
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
+
+# The site file above was just rewritten, so certbot has to put its TLS
+# block back on every boot. --keep-until-expiring reuses the existing cert.
+if [ -n "${domain}" ] && [ -n "${letsencrypt_email}" ]; then
+  certbot --nginx --non-interactive --agree-tos --keep-until-expiring --redirect \
+    -m "${letsencrypt_email}" -d "${domain}" \
+    || echo "certbot failed (does ${domain} resolve to this VM yet?); retrying next boot"
+fi
+
+# --- 6. Containers ------------------------------------------------------------
+if command -v gcloud >/dev/null 2>&1; then
+  gcloud auth configure-docker "${registry_host}" --quiet || echo "gcloud docker auth failed; pulls from ${registry_host} will fail"
+fi
+cd "$APP_DIR"
+if docker compose pull; then
+  docker compose up -d --remove-orphans
+else
+  echo "Couldn't pull the app image yet. Push it, then run: cd $APP_DIR && sudo docker compose up -d"
+fi
+
+echo "=== marketplace startup done $(date -Is) ==="

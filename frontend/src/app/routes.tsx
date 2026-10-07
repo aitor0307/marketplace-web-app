@@ -4,7 +4,7 @@ import { MainLayout } from '@/app/MainLayout';
 import { NotFoundScreen } from '@/app/NotFoundScreen';
 import { RequireAuth, RequireGuest } from '@/app/RequireAuth';
 import { ROUTES, paths } from '@/config/constants';
-import { LoginScreen, RegisterScreen } from '@/features/auth';
+import { ApproveUserScreen, LoginScreen, RegisterScreen } from '@/features/auth';
 import { ListingDetailScreen, ListingsScreen, NewListingScreen } from '@/features/listings';
 import { SendMessageScreen } from '@/features/messages';
 import { EditProfileScreen, UserProfileScreen } from '@/features/users';
@@ -16,6 +16,7 @@ export function AppRouter() {
         <Route path={ROUTES.home} element={<ListingsScreen />} />
         <Route path={ROUTES.listing} element={<ListingDetailScreen />} />
         <Route path={ROUTES.user} element={<UserProfileScreen />} />
+        <Route path={ROUTES.approval} element={<ApproveUserScreen />} />
 
         <Route element={<RequireGuest />}>
           <Route path={ROUTES.login} element={<LoginScreen />} />

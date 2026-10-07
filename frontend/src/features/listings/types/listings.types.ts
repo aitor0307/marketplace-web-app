@@ -7,12 +7,13 @@ export type ListingFilters = {
   price_max?: string;
 };
 
-/** Mirrors CreateListingPayload + the multipart `image` field. */
+/** Mirrors CreateListingPayload + the repeated multipart `images` field. */
 export type NewListingInput = {
   title: string;
   body: string;
   condition: ListingCondition;
   price: number;
   tags: string[];
-  image: File;
+  /** The first one becomes the cover. */
+  images: File[];
 };

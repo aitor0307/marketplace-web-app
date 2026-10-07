@@ -1,12 +1,20 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from .base import Config
+from .base import Config, settings
 
 
 class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
+
+    # An explicit DATABASE_URL wins; otherwise default to the Supabase
+    # database, and only then to the POSTGRES_* composed URI.
+    SQLALCHEMY_DATABASE_URI = (
+        settings.database_url
+        or settings.supabase_database_url
+        or settings.sqlalchemy_database_uri
+    )
 
     @classmethod
     def init_app(cls, app):

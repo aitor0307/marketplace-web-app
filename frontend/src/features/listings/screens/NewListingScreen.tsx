@@ -1,12 +1,16 @@
 import {
   Alert,
+  AlertDescription,
   AlertIcon,
+  AlertTitle,
+  Badge,
   Box,
   Button,
   FormControl,
   FormErrorMessage,
   FormHelperText,
   FormLabel,
+  IconButton,
   Image,
   Input,
   InputGroup,
@@ -17,13 +21,20 @@ import {
   Textarea,
   useToast,
 } from '@chakra-ui/react';
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, type ChangeEvent } from 'react';
+import { useController, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { HiOutlinePhoto, HiXMark } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/Card';
 import { Page } from '@/components/Page';
-import { LISTING_CONDITIONS, paths, type ListingCondition } from '@/config/constants';
+import {
+  LISTING_CONDITIONS,
+  MAX_LISTING_IMAGES,
+  paths,
+  type ListingCondition,
+} from '@/config/constants';
+import { useRefreshPendingUser } from '@/features/auth';
 import { useCreateListing } from '@/features/listings/hooks/useListings';
 import { applyApiError } from '@/utils/forms';
 
@@ -33,7 +44,7 @@ type NewListingFormValues = {
   condition: ListingCondition;
   price: string;
   tags: string;
-  image: FileList;
+  images: File[];
 };
 
 const FIELDS = ['title', 'body', 'condition', 'price', 'tags'] as const;
@@ -51,28 +62,48 @@ export function NewListingScreen() {
   const toast = useToast();
   const navigate = useNavigate();
   const createListing = useCreateListing();
+  const isPending = useRefreshPendingUser();
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
-    watch,
     formState: { errors },
   } = useForm<NewListingFormValues>({
-    defaultValues: { title: '', body: '', condition: 'New', price: '', tags: '' },
+    defaultValues: { title: '', body: '', condition: 'New', price: '', tags: '', images: [] },
   });
 
-  const imageFiles = watch('image');
-  const previewUrl = useMemo(
-    () => (imageFiles?.[0] ? URL.createObjectURL(imageFiles[0]) : undefined),
+  // Not a registered <input>: picking files again appends to the selection
+  // instead of replacing it, and each picked file can be removed on its own.
+  const { field: imagesField } = useController({
+    name: 'images',
+    control,
+    rules: {
+      validate: (files) => {
+        if (files.length === 0) return t('newListing.imageRequired');
+        if (files.length > MAX_LISTING_IMAGES)
+          return t('newListing.imagesMax', { count: MAX_LISTING_IMAGES });
+        return true;
+      },
+    },
+  });
+  const imageFiles = imagesField.value;
+
+  const previewUrls = useMemo(
+    () => imageFiles.map((file) => URL.createObjectURL(file)),
     [imageFiles],
   );
-  useEffect(
-    () => () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    },
-    [previewUrl],
-  );
+  useEffect(() => () => previewUrls.forEach((url) => URL.revokeObjectURL(url)), [previewUrls]);
+
+  const onAddImages = (event: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(event.target.files ?? []);
+    // Clear it so picking the same file again still fires onChange.
+    event.target.value = '';
+    if (picked.length) imagesField.onChange([...imageFiles, ...picked]);
+  };
+  const onRemoveImage = (index: number) =>
+    imagesField.onChange(imageFiles.filter((_file, i) => i !== index));
 
   const onSubmit = handleSubmit((values) => {
     createListing.mutate(
@@ -82,7 +113,7 @@ export function NewListingScreen() {
         condition: values.condition,
         price: Number(values.price),
         tags: parseTags(values.tags),
-        image: values.image[0],
+        images: values.images,
       },
       {
         onSuccess: (listing) => {
@@ -93,6 +124,20 @@ export function NewListingScreen() {
       },
     );
   });
+
+  if (isPending) {
+    return (
+      <Page title={t('newListing.title')} narrow>
+        <Alert status="info" borderRadius="12px" alignItems="flex-start">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>{t('newListing.pendingTitle')}</AlertTitle>
+            <AlertDescription fontSize="sm">{t('newListing.pendingDesc')}</AlertDescription>
+          </Box>
+        </Alert>
+      </Page>
+    );
+  }
 
   return (
     <Page title={t('newListing.title')} subtitle={t('newListing.subtitle')} narrow>
@@ -105,28 +150,70 @@ export function NewListingScreen() {
             </Alert>
           ) : null}
 
-          <FormControl isInvalid={Boolean(errors.image)}>
+          <FormControl isInvalid={Boolean(errors.images)}>
             <FormLabel>{t('newListing.image')}</FormLabel>
-            {previewUrl ? (
-              <Box
-                mb={3}
-                borderRadius="xl"
-                overflow="hidden"
-                borderWidth="1px"
-                borderColor="brand.border"
-              >
-                <Image src={previewUrl} alt="" maxH="240px" w="full" objectFit="cover" />
-              </Box>
+            {previewUrls.length ? (
+              <SimpleGrid columns={{ base: 3, sm: 4 }} spacing={3} mb={3}>
+                {previewUrls.map((url, index) => (
+                  <Box
+                    key={url}
+                    position="relative"
+                    borderRadius="xl"
+                    overflow="hidden"
+                    borderWidth="1px"
+                    borderColor="brand.border"
+                  >
+                    <Image src={url} alt="" w="full" h="96px" objectFit="cover" />
+                    {index === 0 ? (
+                      <Badge
+                        position="absolute"
+                        bottom={1}
+                        left={1}
+                        bg="brand.primary"
+                        color="white"
+                        borderRadius="6px"
+                        textTransform="none"
+                      >
+                        {t('newListing.cover')}
+                      </Badge>
+                    ) : null}
+                    <IconButton
+                      aria-label={t('newListing.removeImage')}
+                      icon={<HiXMark />}
+                      size="xs"
+                      isRound
+                      position="absolute"
+                      top={1}
+                      right={1}
+                      onClick={() => onRemoveImage(index)}
+                    />
+                  </Box>
+                ))}
+              </SimpleGrid>
             ) : null}
-            <Input
-              type="file"
-              accept="image/*"
-              p={1.5}
-              {...register('image', {
-                validate: (files) => (files && files.length > 0) || t('newListing.imageRequired'),
-              })}
-            />
-            <FormErrorMessage>{errors.image?.message}</FormErrorMessage>
+            <Button
+              as="label"
+              variant="outline"
+              leftIcon={<HiOutlinePhoto />}
+              cursor="pointer"
+              isDisabled={imageFiles.length >= MAX_LISTING_IMAGES}
+            >
+              {t('newListing.addImages')}
+              <Input
+                ref={imagesField.ref}
+                type="file"
+                accept="image/*"
+                multiple
+                display="none"
+                onChange={onAddImages}
+                onBlur={imagesField.onBlur}
+                isDisabled={imageFiles.length >= MAX_LISTING_IMAGES}
+              />
+            </Button>
+            <FormHelperText fontSize="xs">
+              {t('newListing.imagesHelp', { count: MAX_LISTING_IMAGES })}
+            </FormHelperText>
+            <FormErrorMessage>{errors.images?.message}</FormErrorMessage>
           </FormControl>
 
           <FormControl isInvalid={Boolean(errors.title)}>

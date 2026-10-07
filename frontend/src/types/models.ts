@@ -10,9 +10,13 @@ export type UserSummary = {
   avatar_url: string | null;
 };
 
+/** Mirrors STATUS_* in app/models/user.py; pending users can't publish listings. */
+export type UserStatus = 'active' | 'pending';
+
 export type User = UserSummary & {
   email: string | null;
   role: string;
+  status: UserStatus;
   last_seen: string | null;
   timestamp: string;
 };
@@ -25,7 +29,9 @@ export type Listing = {
   condition: string;
   user_id: number;
   timestamp: string;
+  /** Cover image: the first of `image_urls`. */
   image_url: string | null;
+  image_urls: string[];
   tags: string[];
   author: UserSummary | null;
 };

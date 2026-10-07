@@ -29,7 +29,7 @@ import { Loader } from '@/components/Loader';
 import { Page } from '@/components/Page';
 import { ROUTES, paths } from '@/config/constants';
 import { useAddFavorite, useMyFavorites } from '@/features/favorites';
-import { ListingImage } from '@/features/listings/components/ListingImage';
+import { ListingGallery } from '@/features/listings/components/ListingGallery';
 import { useDeleteListing, useListing } from '@/features/listings/hooks/useListings';
 import { useSessionStore } from '@/store/sessionStore';
 import { ApiError } from '@/types/api';
@@ -94,8 +94,8 @@ export function ListingDetailScreen() {
         alignItems="start"
       >
         <Card p={0} overflow="hidden">
-          <ListingImage
-            src={listing.image_url}
+          <ListingGallery
+            srcs={listing.image_urls}
             alt={listing.title}
             h={{ base: '260px', md: '420px' }}
           />

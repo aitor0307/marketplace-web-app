@@ -40,7 +40,11 @@
     "repeatPassword": "Repite la contraseña",
     "createAccount": "Crear cuenta",
     "emailTaken": "Ya existe una cuenta con ese email.",
-    "registerFailed": "No se ha podido crear la cuenta. Inténtalo de nuevo."
+    "registerFailed": "No se ha podido crear la cuenta. Inténtalo de nuevo.",
+    "registrationKey": "Código de registro",
+    "registrationKeyHelp": "Si has recibido un código, introdúcelo para empezar a vender ya. Sin él, tu cuenta tendrá que ser aprobada antes.",
+    "pendingRegistered": "Cuenta creada, pendiente de aprobación",
+    "pendingRegisteredDesc": "Puedes ver anuncios y escribir a vendedores; podrás publicar anuncios cuando se apruebe tu cuenta."
   },
   "validation": {
     "required": "Este campo es obligatorio",
@@ -73,7 +77,8 @@
     "deleteTitle": "¿Eliminar este anuncio?",
     "deleteDesc": "Se retirará del marketplace. No se puede deshacer.",
     "postedBy": "Publicado por",
-    "messageSeller": "Escribir al vendedor"
+    "messageSeller": "Escribir al vendedor",
+    "showImage": "Ver foto {{index}}"
   },
   "favorites": {
     "add": "Añadir a favoritos",
@@ -83,9 +88,14 @@
   },
   "newListing": {
     "title": "Vender algo",
-    "subtitle": "Añade una foto y algunos detalles.",
-    "image": "Foto",
-    "imageRequired": "Añade una foto del artículo",
+    "subtitle": "Añade algunas fotos y algunos detalles.",
+    "image": "Fotos",
+    "imageRequired": "Añade al menos una foto del artículo",
+    "imagesHelp": "Hasta {{count}} fotos. La primera será la portada.",
+    "imagesMax": "Puedes añadir hasta {{count}} fotos",
+    "addImages": "Añadir fotos",
+    "removeImage": "Quitar foto",
+    "cover": "Portada",
     "listingTitle": "Título",
     "details": "Detalles",
     "price": "Precio",
@@ -94,7 +104,9 @@
     "tagsHelp": "Separa las etiquetas con comas.",
     "submit": "Publicar anuncio",
     "created": "Anuncio creado",
-    "failed": "No se ha podido crear el anuncio. Inténtalo de nuevo."
+    "failed": "No se ha podido crear el anuncio. Inténtalo de nuevo.",
+    "pendingTitle": "Tu cuenta está pendiente de aprobación",
+    "pendingDesc": "Podrás publicar anuncios en cuanto se apruebe tu cuenta."
   },
   "profile": {
     "lastSeen": "Última conexión: {{when}}",
@@ -121,5 +133,14 @@
     "failed": "No se ha podido enviar el mensaje. Inténtalo de nuevo.",
     "you": "Tú",
     "re": "sobre:"
+  },
+  "approval": {
+    "title": "Aprobar nuevo usuario",
+    "subtitle": "Esta persona se ha registrado sin código de registro.",
+    "approve": "Aprobar usuario",
+    "approved": "Usuario aprobado",
+    "alreadyActive": "Esta cuenta está activa y puede publicar anuncios.",
+    "pendingDesc": "Una vez aprobada, podrá publicar anuncios.",
+    "failed": "No se ha podido aprobar al usuario. Inténtalo de nuevo."
   }
 }

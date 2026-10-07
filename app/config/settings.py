@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     postgres_db: str = Field("marketplace", alias="POSTGRES_DB")
     database_url: Optional[str] = Field(None, alias="DATABASE_URL")
     test_database_url: Optional[str] = Field(None, alias="TEST_DATABASE_URL")
+    # Supabase Postgres connection string; production falls back to it when
+    # DATABASE_URL is unset (see app/config/production.py).
+    supabase_database_url: Optional[str] = Field(default=None, alias="SUPABASE_DATABASE_URL")
 
     # --- Redis ---------------------------------------------------------------
     redis_host: str = Field("localhost", alias="REDIS_HOST")
@@ -65,6 +68,15 @@ class Settings(BaseSettings):
     # --- OAuth login (Google today; add another client id + verifier in
     # app/routes/operations/auth_ops.py for Apple/others) --------------------
     google_oauth_client_id: Optional[str] = Field(None, alias="GOOGLE_OAUTH_CLIENT_ID")
+
+    # --- Registration approval --------------------------------------------------
+    # The key handed out to people who may register straight away; anyone
+    # registering without it (or with a wrong one) is created "pending" until
+    # the approver clicks the link emailed to them. Unset = everyone is pending.
+    registration_key: Optional[str] = Field(default=None, alias="REGISTRATION_KEY")
+    registration_approver_email: str = Field(
+        default="aitor.gastaminza@clubesquivaldaran.com", alias="REGISTRATION_APPROVER_EMAIL"
+    )
 
     @computed_field  # type: ignore[misc]
     @property

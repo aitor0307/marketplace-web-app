@@ -12,6 +12,8 @@ export type RegisterRequest = {
   password: string;
   state: string;
   city: string;
+  /** Without the right key the account is created pending approval. */
+  registration_key?: string;
 };
 
 /** Mirrors AuthResponse in app/schemas/common.py. */

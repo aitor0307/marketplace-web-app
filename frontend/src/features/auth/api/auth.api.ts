@@ -22,4 +22,18 @@ export const authApi = {
   me(): Promise<User> {
     return apiClient<{ user: User }>('/api/v1/auth/me').then((res) => res.user);
   },
+
+  /** The signed token from the approval email is the only authorization. */
+  getApproval(token: string): Promise<User> {
+    return apiClient<{ user: User }>(`/api/v1/auth/approvals/${encodeURIComponent(token)}`, {
+      auth: false,
+    }).then((res) => res.user);
+  },
+
+  approve(token: string): Promise<User> {
+    return apiClient<{ user: User }>(`/api/v1/auth/approvals/${encodeURIComponent(token)}`, {
+      method: 'POST',
+      auth: false,
+    }).then((res) => res.user);
+  },
 };

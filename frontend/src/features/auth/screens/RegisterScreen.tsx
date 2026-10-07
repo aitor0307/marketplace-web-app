@@ -4,12 +4,14 @@ import {
   Button,
   FormControl,
   FormErrorMessage,
+  FormHelperText,
   FormLabel,
   Input,
   Link,
   Select,
   SimpleGrid,
   Stack,
+  useToast,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
@@ -24,11 +26,12 @@ import { applyApiError } from '@/utils/forms';
 
 type RegisterFormValues = RegisterRequest & { password2: string };
 
-const FIELDS = ['name', 'email', 'password', 'state', 'city'] as const;
+const FIELDS = ['name', 'email', 'password', 'state', 'city', 'registration_key'] as const;
 
 export function RegisterScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
   const registerUser = useRegister();
   const rules = authRules(t);
 
@@ -46,14 +49,32 @@ export function RegisterScreen() {
       password2: '',
       state: STATE_OPTIONS[0],
       city: '',
+      registration_key: '',
     },
   });
 
   const onSubmit = handleSubmit(({ password2: _password2, ...values }) => {
     registerUser.mutate(
-      { ...values, name: values.name.trim(), email: values.email.trim(), city: values.city.trim() },
       {
-        onSuccess: () => navigate(ROUTES.home, { replace: true }),
+        ...values,
+        name: values.name.trim(),
+        email: values.email.trim(),
+        city: values.city.trim(),
+        registration_key: values.registration_key?.trim() || undefined,
+      },
+      {
+        onSuccess: ({ user }) => {
+          if (user.status === 'pending') {
+            toast({
+              status: 'info',
+              title: t('auth.pendingRegistered'),
+              description: t('auth.pendingRegisteredDesc'),
+              duration: 10000,
+              isClosable: true,
+            });
+          }
+          navigate(ROUTES.home, { replace: true });
+        },
         onError: (error) => {
           if (error instanceof ApiError && error.status === 409) {
             setError('email', { message: t('auth.emailTaken') });
@@ -138,6 +159,13 @@ export function RegisterScreen() {
             })}
           />
           <FormErrorMessage>{errors.password2?.message}</FormErrorMessage>
+        </FormControl>
+
+        <FormControl isInvalid={Boolean(errors.registration_key)}>
+          <FormLabel>{t('auth.registrationKey')}</FormLabel>
+          <Input autoComplete="off" {...register('registration_key')} />
+          <FormHelperText fontSize="xs">{t('auth.registrationKeyHelp')}</FormHelperText>
+          <FormErrorMessage>{errors.registration_key?.message}</FormErrorMessage>
         </FormControl>
 
         <Button type="submit" size="lg" isLoading={registerUser.isPending}>

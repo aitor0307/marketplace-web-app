@@ -7,6 +7,8 @@ export const ROUTES = {
   user: '/users/:userId',
   sendMessage: '/users/:userId/message',
   editProfile: '/profile/edit',
+  /** Emailed by auth_ops.approval_url_for; keep the path in sync. */
+  approval: '/approvals/:token',
 } as const;
 
 /** Builders for parameterised routes — keep in sync with SPA_SUCCESSORS in app/routes/views/__init__.py. */
@@ -30,6 +32,9 @@ export const STATE_OPTIONS = [
   'Bizkaia',
   'Gipuzkoa',
 ] as const;
+
+/** Mirrors MAX_LISTING_IMAGES in app/config/base.py. */
+export const MAX_LISTING_IMAGES = 10;
 
 export const PRICE_CURRENCY = 'EUR';
 
