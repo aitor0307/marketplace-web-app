@@ -9,6 +9,10 @@ from app.models.mixins import CRUDMixin
 ROLE_USER = "USER"
 ROLE_ADMIN = "ADMIN"
 
+# Account approval, unrelated to ``state`` (the user's province).
+STATUS_ACTIVE = "active"
+STATUS_PENDING = "pending"
+
 
 class User(UserMixin, CRUDMixin, db.Model):
     __tablename__ = "user"
@@ -19,6 +23,9 @@ class User(UserMixin, CRUDMixin, db.Model):
     state = db.Column(db.String(20))
     city = db.Column(db.String(50))
     role = db.Column(db.String(20), default=ROLE_USER, nullable=False)
+    status = db.Column(
+        db.String(20), default=STATUS_ACTIVE, server_default=STATUS_ACTIVE, nullable=False
+    )
     last_seen = db.Column(db.DateTime)
 
     listings = db.relationship("Listing", backref="author", lazy="dynamic")
@@ -38,6 +45,36 @@ class User(UserMixin, CRUDMixin, db.Model):
 
     def has_role(self, role):
         return self.role == role
+
+    @property
+    def is_approved(self):
+        # Not flask-login's ``is_active``: pending users may still log in,
+        # they just can't publish listings until approved.
+        return self.status == STATUS_ACTIVE
+
+    def approve(self):
+        return self.update(status=STATUS_ACTIVE)
+
+    def to_dict(self):
+        # CRUDMixin.to_dict dumps every column; the password hash must never
+        # leave the server, and API clients need the avatar the views build.
+        data = super().to_dict()
+        data.pop("password_hash", None)
+        data["avatar_url"] = self.avatar_url()
+        return data
+
+    def avatar_url(self, size=128):
+        return self.avatar(size) if self.email else None
+
+    def to_summary(self):
+        """The author card embedded in listings and messages."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "city": self.city,
+            "state": self.state,
+            "avatar_url": self.avatar_url(),
+        }
 
 
 @login.user_loader

@@ -21,3 +21,6 @@ class TestingConfig(Config):
     REDIS_DB = settings.test_redis_db
 
     JWT_ACCESS_TOKEN_EXPIRES = 300
+
+    REGISTRATION_KEY = "test-registration-key"
+    REGISTRATION_APPROVER_EMAIL = "approver@example.com"

@@ -20,6 +20,17 @@ actual business logic as JWT-protected, documented JSON endpoints under
 the server-side HTML pages and calls straight into that logic layer
 in-process instead of duplicating it.
 
+**The Jinja views are deprecated.** The React app in [`frontend/`](frontend/README.md)
+replaces them and uses only the `/api/v1` operations. The views still work
+(nothing has been removed yet) but every response carries a `Deprecation: true`
+header — plus a `Link: <...>; rel="successor-version"` pointing at the SPA route
+when `FRONTEND_URL` is set — and the first hit on each view is logged as
+`[DEPRECATED]`. Don't add features to `app/routes/views`.
+
+Frontend-related settings: `FRONTEND_URL` (SPA base URL, used in email links)
+and `CORS_ORIGINS` (comma-separated origins allowed to call `/api/*`,
+default `http://localhost:5173`).
+
 ```bash
 cp .env.example .env            # fill in real secrets
 python -m venv venv && source venv/bin/activate

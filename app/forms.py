@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, MultipleFileField
 from wtforms import Field
 from wtforms.widgets import TextArea
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
@@ -73,7 +73,7 @@ class ListingForm(FlaskForm):
     tags = TagListField('Tags', separator=",")
     conditions = [('New','New'), ('Used', 'Used'), ('Broken', 'Broken')]
     condition = SelectField('Condition', choices=conditions)
-    image = FileField('Image')
+    images = MultipleFileField('Images')
     submit = SubmitField('Submit')
 
 class MessageForm(FlaskForm):

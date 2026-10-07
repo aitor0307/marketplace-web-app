@@ -10,12 +10,13 @@ from pydantic import ValidationError
 from app.utils.logger import logger
 
 
-def jwt_verify(roles=[".*"], is_2fa=False):
+def jwt_verify(roles=[".*"], is_2fa=False, refresh=False):
     """
     Custom decorator to extend jwt_required() to check for roles.
     ADMIN is implicitly granted access to every route, unless the route is
     exclusively for SUPER_ADMIN.
     :param roles: List of roles required to access the route
+    :param refresh: Accept a refresh token instead of an access token
     """
     allowed_roles = list(roles)
     if allowed_roles != ["SUPER_ADMIN"] and "ADMIN" not in allowed_roles:
@@ -28,7 +29,7 @@ def jwt_verify(roles=[".*"], is_2fa=False):
             # at module top would be circular during app package init.
             from app.models.api_base import ResponseFactory
             try:
-                verify_jwt_in_request()
+                verify_jwt_in_request(refresh=refresh)
 
                 def role_allowed(role_to_check: str, allowed_roles: list[str]) -> bool:
                     return any(bool(re.fullmatch(pattern, role_to_check)) for pattern in allowed_roles)

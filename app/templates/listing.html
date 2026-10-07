@@ -12,7 +12,9 @@
             <h5 class="font-weight-bold">{{ listing.title }}</h5>
             <p class="listing-tag">{{ listing.condition }}</p>
             <p class="listing-tag">${{ listing.price }}</p>
-            <img style="display: block;" height="200" width="auto" src="../static/listing_images/{{ image.src }}"/>
+            {% for image in images %}
+                <img style="display: inline-block;" class="mr-1 mb-1" height="200" width="auto" src="../static/listing_images/{{ image.src }}"/>
+            {% endfor %}
             <pre>{{ listing.body }}</pre>
         </div>
         <div class="col-4 px-0">

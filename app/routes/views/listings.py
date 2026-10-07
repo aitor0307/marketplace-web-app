@@ -2,13 +2,13 @@ from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from app.forms import FilterForm, ListingForm
-from app.models import Image
 from app.routes.operations.listings_ops import (
     create_listing,
     delete_listing,
     filter_listings,
     get_listing,
     get_listing_image,
+    get_listing_images,
 )
 
 views_listings_bp = Blueprint("views_listings", __name__)
@@ -43,15 +43,18 @@ def index():
 @views_listings_bp.route("/new_listing", methods=["GET", "POST"])
 @login_required
 def new_listing():
+    if not current_user.is_approved:
+        flash("Your account is pending approval")
+        return redirect(url_for("views_listings.index"))
     form = ListingForm()
     if form.validate_on_submit():
-        listing, _image = create_listing(
+        listing, _images = create_listing(
             user=current_user,
             title=form.title.data,
             body=form.body.data,
             condition=form.condition.data,
             price=form.price.data,
-            image_file=form.image.data,
+            image_files=[image_file for image_file in form.images.data if image_file and image_file.filename],
             tags=form.tags.data,
         )
         flash("Listing created")
@@ -64,12 +67,11 @@ def listing_detail(listing_id):
     listing = get_listing(listing_id)
     if listing is None:
         abort(404)
-    image = Image.query.filter_by(listing_id=listing.id).first()
     return render_template(
         "listing.html",
         listing=listing,
         title="view listing",
-        image=image,
+        images=get_listing_images(listing.id),
         user=listing.author,
         current_user=current_user,
     )

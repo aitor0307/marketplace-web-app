@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     image: marketplace-app:local
+    # Local-only tag: always build it, never try to pull it from a registry.
+    pull_policy: build
     env_file: .env
     environment:
       APP_ENV: development

@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     postgres_db: str = Field("marketplace", alias="POSTGRES_DB")
     database_url: Optional[str] = Field(None, alias="DATABASE_URL")
     test_database_url: Optional[str] = Field(None, alias="TEST_DATABASE_URL")
+    # Supabase Postgres connection string; production falls back to it when
+    # DATABASE_URL is unset (see app/config/production.py).
+    supabase_database_url: Optional[str] = Field(default=None, alias="SUPABASE_DATABASE_URL")
 
     # --- Redis ---------------------------------------------------------------
     redis_host: str = Field("localhost", alias="REDIS_HOST")
@@ -51,6 +54,12 @@ class Settings(BaseSettings):
 
     app_host: str = Field("http://localhost:5000", alias="APP_HOST")
 
+    # --- React frontend (frontend/) -------------------------------------------
+    # Where the SPA is served; used for links in outgoing emails.
+    frontend_url: Optional[str] = Field(default=None, alias="FRONTEND_URL")
+    # Comma-separated origins allowed to call /api/* from the browser.
+    cors_origins: str = Field(default="http://localhost:5173", alias="CORS_ORIGINS")
+
     # --- Logging / observability --------------------------------------------
     log_level: str = Field("INFO", alias="LOG_LEVEL")
     gchat_webhook: Optional[str] = Field(None, alias="GCHAT_WEBHOOK")
@@ -59,6 +68,15 @@ class Settings(BaseSettings):
     # --- OAuth login (Google today; add another client id + verifier in
     # app/routes/operations/auth_ops.py for Apple/others) --------------------
     google_oauth_client_id: Optional[str] = Field(None, alias="GOOGLE_OAUTH_CLIENT_ID")
+
+    # --- Registration approval --------------------------------------------------
+    # The key handed out to people who may register straight away; anyone
+    # registering without it (or with a wrong one) is created "pending" until
+    # the approver clicks the link emailed to them. Unset = everyone is pending.
+    registration_key: Optional[str] = Field(default=None, alias="REGISTRATION_KEY")
+    registration_approver_email: str = Field(
+        default="aitor.gastaminza@clubesquivaldaran.com", alias="REGISTRATION_APPROVER_EMAIL"
+    )
 
     @computed_field  # type: ignore[misc]
     @property
@@ -87,6 +105,11 @@ class Settings(BaseSettings):
     @property
     def admins_list(self) -> List[str]:
         return [admin for admin in self.admins.split(",") if admin]
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @computed_field  # type: ignore[misc]
     @property

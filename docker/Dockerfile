@@ -37,6 +37,7 @@ RUN pip install --no-index --find-links=/wheels -r requirements.txt \
     && rm -rf /wheels
 
 COPY app ./app
+COPY tools ./tools
 COPY migrations ./migrations
 COPY docker/gunicorn.conf.py ./docker/gunicorn.conf.py
 COPY wsgi.py ./wsgi.py

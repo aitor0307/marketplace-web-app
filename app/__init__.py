@@ -4,7 +4,7 @@ from flask import Flask
 from flask_login import current_user
 
 from app.config import get_config
-from app.extensions import bootstrap, db, jwt, login, mail, migrate, moment, redis_client
+from app.extensions import bootstrap, cors, db, jwt, login, mail, migrate, moment, redis_client
 
 
 def create_app(config_name=None):
@@ -35,6 +35,8 @@ def _init_extensions(app):
     moment.init_app(app)
     jwt.init_app(app)
     redis_client.init_app(app)
+    # Only the JSON API is cross-origin; the deprecated Jinja views stay same-origin.
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
 
 
 def _register_blueprints(app):

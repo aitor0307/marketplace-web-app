@@ -1,8 +1,8 @@
-# Local dev DB + Redis only -- no app container.
+# Local dev DB + Redis + the React frontend -- no Flask container.
 #
 # Run this alongside the "CEVA-MP" / "Migrate" / "Upgrade DB" / "Downgrade DB"
-# debugpy launch configs, which run Flask directly on the host and connect to
-# these services on localhost.
+# debugpy launch configs, which run Flask directly on the host (:4000) and
+# connect to these services on localhost.
 #
 #   docker compose -f docker-compose.local.yml up -d
 #
@@ -35,6 +35,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # React SPA (frontend/), built and served by nginx at http://localhost:5173.
+  # The browser calls the host's Flask API directly, so VITE_API_URL is baked
+  # in at build time (rebuild with --build after changing it) and the host
+  # port must stay listed in the backend's CORS_ORIGINS (default
+  # http://localhost:5173).
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+    image: marketplace-frontend:local
+    # Local-only tag: always build it, never try to pull it from a registry.
+    pull_policy: build
+    ports:
+      - "5173:80"
 
 volumes:
   postgres_local_data:
