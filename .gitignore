@@ -1,0 +1,20 @@
+.idea/
+other/
+__pycache__/
+*.pyc
+
+.env
+*.db
+logs/
+venv/
+.venv/
+.pytest_cache/
+.vscode
+app/static/listing_images
+app/static/avatars
+
+# Terragrunt / Terraform
+.terragrunt-cache/
+.terraform/
+*.tfstate
+*.tfstate.*

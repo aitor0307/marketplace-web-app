@@ -1,0 +1,61 @@
+# Local dev DB + Redis + the React frontend -- no Flask container.
+#
+# Run this alongside Flask on the host (e.g. a debugpy launch config on :4000),
+# which connects to these services on localhost.
+#
+#   docker compose -f docker-compose.local.yml up -d
+#
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: marketplace
+      POSTGRES_PASSWORD: marketplace
+      POSTGRES_DB: marketplace
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      # Creates marketplace_test (what pytest uses) on a fresh volume only;
+      # on an existing one run:
+      #   docker compose -f docker-compose.local.yml exec db createdb -U marketplace marketplace_test
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketplace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_local_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # React SPA (frontend/), built and served by nginx at http://localhost:5173.
+  # The browser calls the host's Flask API directly, so VITE_API_URL is baked
+  # in at build time (rebuild with --build after changing it) and the host
+  # port must stay listed in the backend's CORS_ORIGINS (default
+  # http://localhost:5173).
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+    image: marketplace-frontend:local
+    # Local-only tag: always build it, never try to pull it from a registry.
+    pull_policy: build
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_local_data:
+  redis_local_data:

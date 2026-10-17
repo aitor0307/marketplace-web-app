@@ -1,0 +1,30 @@
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+
+class UserPublic(BaseModel):
+    """The shape of User.to_dict() as returned by the auth/user endpoints."""
+
+    id: int
+    name: Optional[str] = None
+    email: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+    role: str
+    status: str
+    avatar_url: Optional[str] = Field(default=None)
+
+
+class AuthResponse(BaseModel):
+    """What every login/register/oauth-login endpoint returns."""
+
+    user: UserPublic
+    access_token: str
+    refresh_token: str
+
+
+class RegisterResponse(AuthResponse):
+    """Registration also says who a pending user can contact."""
+
+    contact_email: Optional[str] = Field(default=None)

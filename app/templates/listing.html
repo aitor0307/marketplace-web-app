@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript"src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"></script>
+    <script src="../static/scripts/map.js"></script>
+    <div style="display: flex; align-items: flex-start;">
+        <div class="col-8 pl-0">
+            {% if listing.author == current_user %}
+                <p><a href="{{ url_for('views_listings.delete_listing_view', listing_id=listing.id) }}">Delete listing</a></p>
+            {% endif %}
+            <h5 class="font-weight-bold">{{ listing.title }}</h5>
+            <p class="listing-tag">{{ listing.condition }}</p>
+            <p class="listing-tag">${{ listing.price }}</p>
+            {% for image in images %}
+                <img style="display: inline-block;" class="mr-1 mb-1" height="200" width="auto" src="../static/listing_images/{{ image.src }}"/>
+            {% endfor %}
+            <pre>{{ listing.body }}</pre>
+        </div>
+        <div class="col-4 px-0">
+            <div  class="listing-user py-2 px-3">
+                <table>
+                    <tbody>
+                        <tr><td><p class="mb-1"><u>Posted by:</u></p></td></tr>
+                        <tr style="vertical-align: top;">
+                            <td>
+                                <img width="60px" height="60px" class="profile-image mr-1" src="{{ user.avatar(128) }}"/>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('views_users.view_user', user_id=user.id) }}">
+                                    <h4>{{ user.name }}</h4>
+                                </a>
+                                <p class="mb-0">📍 {{ user.city }}, {{ user.state }}</p>
+                                {% if current_user != user and current_user.is_authenticated %}
+                                    <p class="mb-0" id="miles-away"></p>
+                                    <script>let myCity='{{ current_user.city }}', myState='{{ current_user.state }}';</script>
+                                    <script>let otherCity='{{ user.city }}', otherState='{{ user.state }}';</script>
+                                    <script>findDistance();</script>
+                                {% endif %}
+                                {% if current_user != user %}
+                                    <p class="m-0"><a href="{{ url_for('views_messages.message', user_id=user.id, listing_id=listing.id) }}">Send Message</a></p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% if current_user.is_authenticated and listing.user_id != current_user.id %}
+                <p class="pt-4"><a href="{{ url_for('views_favorites.favorite', listing_id=listing.id) }}">Add to my favorites</a></p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

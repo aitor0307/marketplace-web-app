@@ -1,0 +1,44 @@
+# Build output
+dist
+dist-ssr
+
+# Dependencies (installed fresh in the container from the lockfile)
+node_modules
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Testing
+coverage
+.nyc_output
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local env files (values come from build args)
+.env
+.env.*
+!.env.example
+
+# Misc
+*.md
+!README.md
+*.tsbuildinfo

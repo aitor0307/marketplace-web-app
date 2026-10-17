@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="col-md-8 pl-0">
+        <form id="new-listing" action="" method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.title.label }}<br>
+                {{ form.title() }}<br>
+                {% for error in form.title.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.condition.label }}<br>
+                {{ form.condition() }}<br>
+                {% for error in form.condition.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.price.label }}<br>
+                {{ form.price() }}<br>
+                {% for error in form.price.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.body.label }}<br>
+                {{ form.body(rows=6) }}<br>
+                {% for error in form.body.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.tags.label }}<br>
+                {{ form.tags(rows=6) }}<br>
+                {% for error in form.body.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.images.label }}<br>
+                {{ form.images(accept="image/*") }}<br>
+                {% for error in form.images.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit() }}</p>
+        </form>
+    </div>
+{% endblock %}
